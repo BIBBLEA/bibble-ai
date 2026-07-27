@@ -24,18 +24,14 @@ export function Testimonials() {
           <h2 className="text-3xl font-bold md:text-4xl">
             Ceux qui scalent déjà leurs créatives avec nous
           </h2>
-          <div className="mt-4 mb-6 flex flex-row items-center justify-center gap-3">
-            <span className="text-lg font-bold text-white">Excellent</span>
-            <div className="flex h-8 items-center md:h-10">
-              <img 
-                src="/trustpilot.webp" 
-                alt="Trustpilot" 
-                className="h-full w-auto object-contain"
-              />
-            </div>
-            <span className="text-sm md:text-base font-medium text-gray-300">Noté 4.8/5 sur Trustpilot</span>
+          <div className="mt-6 flex justify-center">
+            <img 
+              src="/trustpilot.webp" 
+              alt="Trustpilot" 
+              className="h-12 w-auto md:h-16"
+            />
           </div>
-          <p className="mx-auto max-w-2xl text-lg text-gray-300">
+          <p className="mx-auto mt-6 max-w-2xl text-muted-foreground">
             Découvrez pourquoi les e-commerçants et agences choisissent Bibble AI.
           </p>
         </div>
@@ -44,7 +40,7 @@ export function Testimonials() {
           {reviews.map((review, index) => (
             <div
               key={index}
-              className="flex flex-col justify-between rounded-2xl border border-border bg-card p-8 shadow-sm transition-all duration-300 hover:border-primary/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5"
+              className="flex flex-col justify-between rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:border-primary/50"
             >
               <div>
                 <div className="mb-4 flex gap-1">

@@ -108,10 +108,10 @@ export function Pricing() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
+              className={`relative flex flex-col rounded-2xl border p-8 transition-all ${
                 plan.popular
                   ? "scale-[1.02] border-primary bg-card shadow-lg shadow-primary/10"
-                  : "border-[rgba(255,255,255,0.25)] bg-card/50 hover:border-[rgba(255,255,255,0.4)] hover:bg-card/70 hover:shadow-xl hover:shadow-white/5"
+                  : "border-[rgba(255,255,255,0.25)] bg-card/50 hover:border-[rgba(255,255,255,0.4)] hover:bg-card/70"
               }`}
             >
               {plan.popular && (
@@ -154,9 +154,9 @@ export function Pricing() {
 
               <Link href="/login" className="mt-auto block">
                 <button
-                  className={`w-full rounded-lg px-6 py-3 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 ${
+                  className={`w-full rounded-lg px-6 py-3 text-sm font-semibold transition-all ${
                     plan.popular
-                      ? "bg-primary text-white shadow-md shadow-primary/30 hover:bg-primary/90 hover:shadow-primary/40"
+                      ? "bg-primary text-white shadow-md shadow-primary/30 hover:bg-primary/90"
                       : "border border-[rgba(255,255,255,0.4)] text-white hover:border-[rgba(255,255,255,0.6)] hover:bg-white/10"
                   }`}
                 >
