@@ -1,0 +1,1 @@
+export const Navbar = () => <nav className="w-full py-4 px-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"><div className="max-w-7xl mx-auto flex justify-between items-center"><div className="text-xl font-bold">Bibble AI</div></div></nav>

@@ -1,0 +1,1 @@
+export const Hero = () => <section className="py-20 px-4 text-center"><h1 className="text-5xl font-bold mb-6">Scaler vos créatifs avec l\IA</h1><p className="text-xl text-muted-foreground max-w-2xl mx-auto">Générez des vidéos publicitaires avec des avatars IA en quelques minutes.</p></section>

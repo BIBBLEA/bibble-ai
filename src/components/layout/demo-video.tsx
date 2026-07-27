@@ -1,0 +1,1 @@
+export const DemoVideo = () => <section className="py-20 bg-secondary/30"><div className="max-w-4xl mx-auto aspect-video bg-card rounded-2xl border border-border flex items-center justify-center text-muted-foreground">Vidéo de démonstration</div></section>

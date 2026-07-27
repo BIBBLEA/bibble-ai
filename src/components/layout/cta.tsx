@@ -1,0 +1,1 @@
+export const CTA = () => <section className="py-20 px-4 text-center"><div className="max-w-4xl mx-auto bg-primary rounded-3xl p-12 text-white"><h2 className="text-3xl font-bold mb-6">Prêt à scaler ?</h2></div></section>

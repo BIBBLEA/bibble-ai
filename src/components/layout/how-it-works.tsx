@@ -1,0 +1,1 @@
+export const HowItWorks = () => <section className="py-20 bg-secondary/30"><div className="max-w-7xl mx-auto px-4"><h2 className="text-3xl font-bold text-center mb-12">Comment ça marche</h2></div></section>

@@ -1,0 +1,9 @@
+{
+  "/_not-found": "app/_not-found.js",
+  "/(dashboard)/dashboard/billing/page": "app/(dashboard)/dashboard/billing/page.js",
+  "/api/stripe/checkout/route": "app/api/stripe/checkout/route.js",
+  "/api/webhooks/stripe/route": "app/api/webhooks/stripe/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/reset-password/page": "app/reset-password/page.js"
+}

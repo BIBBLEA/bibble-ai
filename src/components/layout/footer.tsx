@@ -1,0 +1,1 @@
+export const Footer = () => <footer className="py-12 border-t border-border mt-20"><div className="max-w-7xl mx-auto px-4 text-center text-muted-foreground">© 2026 Bibble AI. Tous droits réservés.</div></footer>
