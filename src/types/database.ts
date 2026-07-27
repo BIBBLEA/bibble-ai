@@ -226,6 +226,52 @@ export interface Database {
           }
         ];
       };
+      video_generations: {
+        Row: {
+          id: string;
+          user_id: string;
+          heygen_video_id: string;
+          script: string;
+          avatar_id: string;
+          voice_id: string;
+          format: "9:16" | "16:9";
+          status: "processing" | "completed" | "failed";
+          created_at: string;
+          video_url: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          heygen_video_id: string;
+          script: string;
+          avatar_id: string;
+          voice_id: string;
+          format: "9:16" | "16:9";
+          status?: "processing" | "completed" | "failed";
+          created_at?: string;
+          video_url?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          heygen_video_id?: string;
+          script?: string;
+          avatar_id?: string;
+          voice_id?: string;
+          format?: "9:16" | "16:9";
+          status?: "processing" | "completed" | "failed";
+          created_at?: string;
+          video_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "video_generations_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       credit_transactions: {
         Row: {
           id: string;
