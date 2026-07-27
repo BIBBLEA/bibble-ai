@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import {
   AVATARS,
   VOICES,
@@ -57,14 +58,54 @@ export function VideoGenerator({
     };
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isScriptEmpty || credits === 0 || isGenerating) return;
-    onGenerate({
-      script: script.trim(),
-      avatarId: selectedAvatar,
-      voiceId: selectedVoice,
-      format,
-    });
+
+    const supabase = getSupabaseBrowserClient();
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error("User not authenticated.");
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("users")
+        .select("credits")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      if (!profileData || profileData.credits === 0) {
+        console.warn("No credits available.");
+        return;
+      }
+
+      await supabase
+        .from("users")
+        .update({ credits: profileData.credits - 1 })
+        .eq("id", user.id);
+
+      await supabase.from("video_generations").insert({
+        user_id: user.id,
+        avatar_id: selectedAvatar,
+        voice_id: selectedVoice,
+        script: script.trim(),
+        format: format,
+        status: "pending",
+      });
+
+      onGenerate({
+        script: script.trim(),
+        avatarId: selectedAvatar,
+        voiceId: selectedVoice,
+        format,
+      });
+    } catch (error) {
+      console.error("Error generating video:", error);
+      // Optionally, show an error message to the user
+    }
   };
 
   const playVoicePreview = (voiceId: string, previewUrl: string) => {

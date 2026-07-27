@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-browser";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { Button } from "@/components/ui/button";
 
@@ -58,14 +58,14 @@ export default function BillingPage() {
   const loadUserData = useCallback(async () => {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await getSupabaseBrowserClient().auth.getSession();
 
     if (!session) {
       router.push("/login");
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabaseBrowserClient()
       .from("users")
       .select("credits, plan")
       .eq("id", session.user.id)
@@ -89,7 +89,7 @@ export default function BillingPage() {
     try {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await getSupabaseBrowserClient().auth.getSession();
 
       if (!session) {
         router.push("/login");
@@ -139,7 +139,7 @@ export default function BillingPage() {
     try {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await getSupabaseBrowserClient().auth.getSession();
 
       if (!session) {
         router.push("/login");

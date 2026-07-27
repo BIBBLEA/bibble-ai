@@ -1,16 +1,28 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { Database } from "@/types/database";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let supabase: ReturnType<typeof createBrowserClient<Database>> | undefined;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase environment variables are missing!");
-  if (!supabaseUrl) console.error("NEXT_PUBLIC_SUPABASE_URL is undefined");
-  if (!supabaseAnonKey) console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY is undefined");
+export function getSupabaseBrowserClient() {
+  if (!supabase) {
+    if (typeof window === 'undefined') {
+      // During server-side rendering or build, return a dummy client to prevent errors
+      // The actual client will be initialized on the browser
+      return {} as ReturnType<typeof createBrowserClient<Database>>;
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Supabase environment variables are missing!");
+      throw new Error("Supabase environment variables are not set.");
+    }
+
+    supabase = createBrowserClient<Database>(
+      supabaseUrl,
+      supabaseAnonKey
+    );
+  }
+  return supabase;
 }
-
-export const supabase = createBrowserClient<Database>(
-  supabaseUrl || "",
-  supabaseAnonKey || ""
-);

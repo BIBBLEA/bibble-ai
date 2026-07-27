@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase-browser";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
 
 function LoginForm() {
@@ -32,7 +32,7 @@ function LoginForm() {
     setMessage("");
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
+      const { error } = await getSupabaseBrowserClient().auth.resetPasswordForEmail(email.toLowerCase().trim(), {
         redirectTo: 'https://www.bibble-ai.com/reset-password',
       });
       if (error) throw error;
@@ -56,7 +56,7 @@ function LoginForm() {
           throw new Error("Le prénom et le nom sont requis.");
         }
 
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await getSupabaseBrowserClient().auth.signUp({
           email,
           password,
           options: {
@@ -85,7 +85,7 @@ function LoginForm() {
           "Vérifiez votre email pour confirmer votre inscription."
         );
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error } = await getSupabaseBrowserClient().auth.signInWithPassword({
           email,
           password,
         });

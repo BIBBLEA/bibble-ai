@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase-browser";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
     // Supabase automatically handles the hash in the URL for password reset
     // This effect ensures the session is established before updating
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
       if (!session) {
         // If no session, the user might have clicked an expired link or a malformed one
         console.warn("No active session found for password reset.");
@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
     setMessage("");
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await getSupabaseBrowserClient().auth.updateUser({
         password: password,
       });
       if (error) throw error;
