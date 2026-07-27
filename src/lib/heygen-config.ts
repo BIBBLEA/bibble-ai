@@ -236,7 +236,7 @@ export const AVATAR_LABEL_BY_ID: Record<string, string> = Object.fromEntries(
   AVATARS.map((avatar) => [avatar.id, `${avatar.name} — ${avatar.style}`])
 );
 
-// Dimensions vidéo explicites pour HeyGen
+// Configuration des dimensions vidéo explicites pour HeyGen
 export const VIDEO_DIMENSIONS = {
   "16:9": { width: 1920, height: 1080, aspect_ratio: "16:9" },
   "9:16": { width: 1080, height: 1920, aspect_ratio: "9:16" },

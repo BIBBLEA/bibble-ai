@@ -20,7 +20,7 @@ export function Navbar() {
       } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: profile } = await supabase
-          .from("users")
+          .from("profiles")
           .select("full_name, email")
           .eq("id", session.user.id)
           .single();

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { Database } from "@/types/database";
-import { v4 as uuidv4 } from 'uuid';
 
 // ============================================
 // POST /api/webhooks/stripe
@@ -15,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 // ============================================
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2026-06-24.dahlia",
 });
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -42,8 +41,8 @@ function getSubscriptionPeriod(subscription: Stripe.Subscription) {
   const item = subscription.items.data[0];
   if (!item) return { start: null, end: null };
   return {
-    start: new Date(subscription.current_period_end * 1000).toISOString(),
-    end: new Date(subscription.current_period_end * 1000).toISOString(),
+    start: new Date(item.current_period_end * 1000).toISOString(),
+    end: new Date(item.current_period_end * 1000).toISOString(),
   };
 }
 
@@ -105,14 +104,9 @@ export async function POST(request: NextRequest) {
 
         const period = getSubscriptionPeriod(subscription);
 
-        if (!period.start || !period.end) {
-          console.error("Missing subscription period data");
-          break;
-        }
-
         // Mettre à jour le profil utilisateur
         await supabaseAdmin
-          .from("users")
+          .from("profiles")
           .update({
             plan: planConfig.plan,
             credits: planConfig.credits,
@@ -123,7 +117,6 @@ export async function POST(request: NextRequest) {
 
         // Créer/mettre à jour l'entrée dans subscriptions
         await supabaseAdmin.from("subscriptions").upsert({
-          id: uuidv4(), // Générer un UUID pour l'ID
           user_id: userId,
           stripe_subscription_id: subscriptionId,
           stripe_price_id: priceId,
@@ -162,7 +155,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Récupérer le subscription ID depuis parent.subscription_details
-        const subscriptionId = invoice.subscription as string || null;
+        const subscriptionId =
+          (invoice.parent?.subscription_details?.subscription as string) || null;
         if (!subscriptionId) break;
 
         // Récupérer l'abonnement
@@ -179,14 +173,9 @@ export async function POST(request: NextRequest) {
 
         const period = getSubscriptionPeriod(subscription);
 
-        if (!period.start || !period.end) {
-          console.error("Missing subscription period data for renewal");
-          break;
-        }
-
         // Réattribuer les crédits (NON CUMULATIF = reset au montant du plan)
         await supabaseAdmin
-          .from("users")
+          .from("profiles")
           .update({
             credits: planConfig.credits,
           })
@@ -240,7 +229,7 @@ export async function POST(request: NextRequest) {
         if (previousPriceId && previousPriceId !== priceId) {
           // C'est un vrai changement de plan
           await supabaseAdmin
-            .from("users")
+            .from("profiles")
             .update({
               plan: planConfig.plan,
               credits: planConfig.credits,
@@ -284,7 +273,7 @@ export async function POST(request: NextRequest) {
 
         // Rétrograder vers le plan "free" (0 crédits)
         await supabaseAdmin
-          .from("users")
+          .from("profiles")
           .update({
             plan: null,
             credits: 0,

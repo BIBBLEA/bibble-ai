@@ -19,30 +19,6 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [isResetting, setIsResetting] = useState(false);
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setError("Veuillez saisir votre adresse e-mail.");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    setMessage("");
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
-        redirectTo: 'https://www.bibble-ai.com/reset-password',
-      });
-      if (error) throw error;
-      setMessage("Un lien de réinitialisation a été envoyé sur votre adresse e-mail.");
-    } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +32,7 @@ function LoginForm() {
           throw new Error("Le prénom et le nom sont requis.");
         }
 
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -69,18 +45,7 @@ function LoginForm() {
             },
           },
         });
-
-        if (error) {
-          if (error.message.includes("User already registered") || error.status === 400) {
-            throw new Error("Un compte existe déjà avec cette adresse e-mail. Veuillez vous connecter.");
-          }
-          throw error;
-        }
-
-        // Si l'utilisateur existe déjà, identities sera vide (comportement Supabase par défaut pour éviter l'énumération d'emails)
-        if (data?.user && (!data.user.identities || data.user.identities.length === 0)) {
-          throw new Error("Un compte existe déjà avec cette adresse e-mail. Veuillez vous connecter.");
-        }
+        if (error) throw error;
         setMessage(
           "Vérifiez votre email pour confirmer votre inscription."
         );
@@ -250,44 +215,19 @@ function LoginForm() {
             </div>
           )}
 
-            {!isSignUp && !isResetting && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsResetting(true)}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Mot de passe oublié ?
-                </button>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={loading}
-              onClick={isResetting ? handleResetPassword : undefined}
-            >
-              {loading
-                ? "Chargement..."
-                : isResetting
-                ? "Envoyer le lien"
-                : isSignUp
-                ? "Créer mon compte"
-                : "Se connecter"}
-            </Button>
-
-            {isResetting && (
-              <button
-                type="button"
-                onClick={() => setIsResetting(false)}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
-              >
-                Retour à la connexion
-              </button>
-            )}
-          </form>
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={loading}
+          >
+            {loading
+              ? "Chargement..."
+              : isSignUp
+              ? "Créer mon compte"
+              : "Se connecter"}
+          </Button>
+        </form>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}

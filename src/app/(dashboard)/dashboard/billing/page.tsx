@@ -66,14 +66,14 @@ export default function BillingPage() {
     }
 
     const { data: profile } = await supabase
-      .from("users")
+      .from("profiles")
       .select("credits, plan")
       .eq("id", session.user.id)
       .single();
 
     if (profile) {
-      setCredits(profile.credits || 0);
-      setPlan(profile.plan || "");
+      setCredits(profile.credits);
+      setPlan(profile.plan);
     }
     setLoading(false);
   }, [router]);
@@ -115,18 +115,15 @@ export default function BillingPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de la création de la session.");
+        throw new Error(result.error || "Erreur");
       }
 
       // Rediriger vers Stripe Checkout
       if (result.data?.checkout_url) {
         window.location.href = result.data.checkout_url;
-      } else {
-        throw new Error("URL de redirection manquante.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Checkout error:", error);
-      alert(error.message || "Une erreur est survenue lors de la redirection vers le paiement. Veuillez réessayer.");
     } finally {
       setCheckoutLoading(null);
     }

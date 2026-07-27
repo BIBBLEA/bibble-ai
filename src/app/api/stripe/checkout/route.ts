@@ -11,7 +11,7 @@ import { Database } from "@/types/database";
 // ============================================
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2026-06-24.dahlia",
 });
 
 export async function POST(request: NextRequest) {
@@ -56,97 +56,63 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from("users")
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
       .select("stripe_customer_id, email")
       .eq("id", user.id)
       .single();
 
-    const profile = profileData as { stripe_customer_id: string | null; email: string | null } | null;
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error("Error fetching profile:", profileError);
-      return NextResponse.json(
-        { error: "Erreur lors de la récupération du profil utilisateur." },
-        { status: 500 }
-      );
-    }
-
     let customerId = profile?.stripe_customer_id;
 
     if (!customerId) {
-      try {
-        // Créer un nouveau customer Stripe
-        const customer = await stripe.customers.create({
-          email: user.email || profile?.email || "",
-          metadata: {
-            supabase_user_id: user.id,
-          },
-        });
-        customerId = customer.id;
+      // Créer un nouveau customer Stripe
+      const customer = await stripe.customers.create({
+        email: user.email || profile?.email || "",
+        metadata: {
+          supabase_user_id: user.id,
+        },
+      });
+      customerId = customer.id;
 
-        // Sauvegarder le customer_id dans le profil
-        const { error: updateError } = await supabaseAdmin
-          .from("users")
-          .update({ stripe_customer_id: customerId })
-          .eq("id", user.id);
-
-        if (updateError) {
-          console.error("Error updating profile with customerId:", updateError);
-        }
-      } catch (stripeError) {
-        console.error("Stripe customer creation error:", stripeError);
-        return NextResponse.json(
-          { error: "Impossible de créer le profil client Stripe." },
-          { status: 500 }
-        );
-      }
+      // Sauvegarder le customer_id dans le profil
+      await supabaseAdmin
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", user.id);
     }
 
     // --- Créer la Checkout Session ---
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-    try {
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        mode: "subscription",
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        success_url: `${appUrl}/dashboard?checkout=success`,
-        cancel_url: `${appUrl}/dashboard/billing?checkout=cancelled`,
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${appUrl}/dashboard?checkout=success`,
+      cancel_url: `${appUrl}/dashboard/billing?checkout=cancelled`,
+      metadata: {
+        supabase_user_id: user.id,
+      },
+      subscription_data: {
         metadata: {
           supabase_user_id: user.id,
         },
-        subscription_data: {
-          metadata: {
-            supabase_user_id: user.id,
-          },
-        },
-      });
+      },
+    });
 
-      if (!session.url) {
-        throw new Error("Stripe session URL is missing");
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          checkout_url: session.url,
-          session_id: session.id,
-        },
-      });
-    } catch (sessionError) {
-      console.error("Stripe session creation error:", sessionError);
-      return NextResponse.json(
-        { error: "Erreur lors de la création de la session de paiement." },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      data: {
+        checkout_url: session.url,
+        session_id: session.id,
+      },
+    });
   } catch (error) {
     console.error("Error in /api/stripe/checkout:", error);
     return NextResponse.json(

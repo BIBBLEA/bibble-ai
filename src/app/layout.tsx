@@ -2,21 +2,27 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Bibble AI - Scaler vos créatifs avec l'IA",
-  description: "Générez des vidéos publicitaires avec des avatars IA en quelques minutes.",
+  title: "Bibble AI - Générateur de Vidéos Publicitaires IA",
+  description:
+    "Créez des vidéos publicitaires ultra-réalistes avec des avatars IA en quelques secondes. Hooks & Ads pour TikTok, YouTube Shorts, Reels et Facebook Ads.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="fr" className="dark">
-      <body className={inter.className}>{children}</body>
+    <html lang="fr" className={`${inter.variable} dark`}>
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+        {children}
+      </body>
     </html>
   );
 }

@@ -7,7 +7,6 @@ import { HowItWorks } from "@/components/layout/how-it-works";
 import { Pricing } from "@/components/layout/pricing";
 import { CTA } from "@/components/layout/cta";
 import { Footer } from "@/components/layout/footer";
-import { FadeInSection } from "@/components/ui/fade-in-section";
 
 export default function Home() {
   return (
@@ -15,27 +14,14 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <FadeInSection>
-          <DemoVideo />
-        </FadeInSection>
-        <FadeInSection>
-          <Testimonials />
-        </FadeInSection>
-        <FadeInSection>
-          <Features />
-        </FadeInSection>
-        <FadeInSection>
-          <HowItWorks />
-        </FadeInSection>
-        <FadeInSection>
-          <Pricing />
-        </FadeInSection>
-        <FadeInSection>
-          <CTA />
-        </FadeInSection>
+        <DemoVideo />
+        <Testimonials />
+        <Features />
+        <HowItWorks />
+        <Pricing />
+        <CTA />
       </main>
       <Footer />
     </>
   );
 }
-// force redeploy Sat Jul 25 22:04:13 UTC 2026

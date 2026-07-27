@@ -96,6 +96,25 @@ export function VideoGenerator({
 
   return (
     <div className="space-y-6">
+      {/* Video Preview Section */}
+      <div>
+        <label className="mb-2 block text-sm font-medium">Aperçu vidéo</label>
+        <div className={`${aspectClass} w-full rounded-xl border border-border bg-secondary/30 flex items-center justify-center overflow-hidden`}>
+          <video
+            className="w-full h-full object-cover"
+            controls
+            style={{ display: "none" }}
+          />
+          <div className="text-center text-muted-foreground">
+            <svg className="mx-auto h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm">Votre vidéo générée s'affichera ici</p>
+          </div>
+        </div>
+      </div>
+
       {/* Format Selection */}
       <div>
         <label className="mb-2 block text-sm font-medium">Format vidéo</label>
@@ -145,25 +164,6 @@ export function VideoGenerator({
               <p className="text-xs text-muted-foreground">YouTube, Facebook Ads</p>
             </div>
           </button>
-        </div>
-      </div>
-
-      {/* Video Player Preview */}
-      <div>
-        <label className="mb-2 block text-sm font-medium">Aperçu vidéo</label>
-        <div className={`${aspectClass} w-full rounded-xl border border-border bg-secondary/30 flex items-center justify-center overflow-hidden`}>
-          <video
-            className="h-full w-full object-cover"
-            controls
-            style={{ display: "none" }}
-          />
-          <div className="text-center text-muted-foreground">
-            <svg className="mx-auto h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm">Votre vidéo générée s'affichera ici</p>
-          </div>
         </div>
       </div>
 

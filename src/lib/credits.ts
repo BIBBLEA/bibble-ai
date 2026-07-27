@@ -5,12 +5,12 @@ import { supabaseAdmin } from "./supabase";
  */
 export async function hasCredits(userId: string): Promise<boolean> {
   const { data } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .select("credits")
     .eq("id", userId)
     .single();
 
-  if (!data || data.credits === null) return false;
+  if (!data) return false;
   return data.credits > 0;
 }
 
@@ -19,12 +19,12 @@ export async function hasCredits(userId: string): Promise<boolean> {
  */
 export async function getCreditsBalance(userId: string): Promise<number> {
   const { data } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .select("credits")
     .eq("id", userId)
     .single();
 
-  if (!data || data.credits === null) return 0;
+  if (!data) return 0;
   return data.credits;
 }
 
@@ -47,7 +47,7 @@ export async function deductCredit(
 
   // Mettre à jour le solde
   const { error: updateError } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .update({ credits: newBalance })
     .eq("id", userId);
 
@@ -83,7 +83,7 @@ export async function grantSubscriptionCredits(
 ): Promise<boolean> {
   // Mettre à jour le solde avec les nouveaux crédits
   const { error: updateError } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .update({ credits })
     .eq("id", userId);
 
@@ -120,7 +120,7 @@ export async function grantManualCredits(
   const newBalance = currentBalance + credits;
 
   const { error: updateError } = await supabaseAdmin
-    .from("users")
+    .from("profiles")
     .update({ credits: newBalance })
     .eq("id", userId);
 
