@@ -77,8 +77,8 @@ export function VideoGenerator({
         .single();
 
       if (profileError) throw profileError;
-      if (!profileData || profileData.credits === 0) {
-        console.warn("No credits available.");
+      if (!profileData || profileData.credits === null || profileData.credits === 0) {
+        console.warn("No credits available or credits are null.");
         return;
       }
 
