@@ -230,7 +230,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          heygen_video_id: string;
+          heygen_video_id?: string;
           script: string;
           avatar_id: string;
           voice_id: string;
@@ -242,7 +242,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          heygen_video_id: string;
+          heygen_video_id?: string;
           script: string;
           avatar_id: string;
           voice_id: string;
