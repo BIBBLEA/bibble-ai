@@ -93,7 +93,7 @@ export function VideoGenerator({
         voice_id: selectedVoice,
         script: script.trim(),
         format: format,
-        status: "pending",
+        status: "processing",
       });
 
       onGenerate({
