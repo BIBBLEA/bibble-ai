@@ -7,7 +7,7 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex flex-col items-center gap-2 md:items-start">
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Bibble AI Logo" className="h-16 w-auto" />
+              <img src="/logo.png" alt="Bibble AI Logo" className="h-32 w-auto" />
             </div>
             <p className="text-sm text-muted-foreground">
               Vidéos publicitaires IA en quelques secondes.

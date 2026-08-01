@@ -71,7 +71,7 @@ function LoginForm() {
       {/* Logo */}
       <div className="mb-8 text-center">
         <Link href="/" className="inline-flex items-center gap-2">
-          <img src="/logo.png" alt="Bibble AI Logo" className="h-32 w-auto" />
+          <img src="/logo.png" alt="Bibble AI Logo" className="h-64 w-auto" />
         </Link>
       </div>
 
