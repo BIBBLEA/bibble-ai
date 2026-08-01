@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: "Bibble AI - Générateur de Vidéos Publicitaires IA",
   description:
     "Créez des vidéos publicitaires ultra-réalistes avec des avatars IA en quelques secondes. Hooks & Ads pour TikTok, YouTube Shorts, Reels et Facebook Ads.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
