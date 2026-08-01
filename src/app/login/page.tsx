@@ -262,3 +262,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+// Modification mineure pour forcer un nouveau déploiement
