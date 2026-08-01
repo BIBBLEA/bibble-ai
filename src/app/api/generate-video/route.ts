@@ -123,10 +123,7 @@ export async function POST(request: NextRequest) {
       script: trimmedScript,
       voice_id: selectedVoice.id,
       aspect_ratio: format,
-      dimension: {
-        width: videoDimensions.width,
-        height: videoDimensions.height,
-      },
+
       fit: "cover",
     };
 
