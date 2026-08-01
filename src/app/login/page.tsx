@@ -69,7 +69,7 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md">
       {/* Logo */}
-      <div className="mb-8 text-center">
+      <div className="mb-4 text-center">
         <Link href="/" className="inline-flex items-center gap-2">
           <img src="/logo.png" alt="Bibble AI Logo" className="h-64 w-auto" />
         </Link>
