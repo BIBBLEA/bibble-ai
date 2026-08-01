@@ -42,7 +42,7 @@ export function Sidebar() {
   const sidebarContent = (
     <>
       <Link href="/" className="flex h-16 items-center gap-2 border-b border-border px-6 transition-opacity hover:opacity-80">
-        <img src="/logo.png" alt="Bibble AI Logo" className="h-8 w-auto" />
+        <img src="/logo.png" alt="Bibble AI Logo" className="h-10 w-auto" />
       </Link>
 
       <nav className="flex-1 space-y-1 p-4">
