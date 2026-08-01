@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       voice_id: selectedVoice.id,
       aspect_ratio: format,
 
-      fit: "cover",
+      fit: "contain",
     };
 
     // Add engine for studio avatars
