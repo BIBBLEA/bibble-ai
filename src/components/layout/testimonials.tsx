@@ -18,7 +18,7 @@ export function Testimonials() {
   ];
 
   return (
-    <section className="bg-secondary/30 py-20 md:py-28" id="temoignages">
+    <section className="bg-secondary/30" id="temoignages">
       <div className="mx-auto max-w-7xl px-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold md:text-4xl">
@@ -43,11 +43,11 @@ export function Testimonials() {
               className="flex flex-col justify-between rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:border-primary/50"
             >
               <div>
-                <div className="mb-4 flex gap-1">
+                <div className="mb-0 flex gap-1">
                   {[...Array(5)].map((_, i) => (
                     <svg
                       key={i}
-                      className={`h-5 w-5 ${
+                      className={`h-10 w-10 ${
                         i < review.rating ? "text-amber-400" : "text-muted-foreground/30"
                       }`}
                       fill="currentColor"
