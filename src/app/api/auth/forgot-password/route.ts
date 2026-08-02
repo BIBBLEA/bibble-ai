@@ -25,20 +25,22 @@ export async function POST(request: NextRequest) {
       type: "recovery",
       email: email.toLowerCase().trim(),
       options: {
-        redirectTo: `${request.headers.get("origin")}/auth/update-password`,
+        redirectTo: "https://www.bibble-ai.com/reset-password",
       },
     });
 
     if (error) {
       console.error("Supabase generateLink error:", error);
-      return NextResponse.json({ error: "Erreur lors de la génération du lien de réinitialisation." }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (!data.properties?.email_redirect_to) {
-      return NextResponse.json({ error: "Lien de redirection d'e-mail non trouvé." }, { status: 500 });
-    }
 
-    const resetLink = data.properties.email_redirect_to;
+
+    const resetLink = data.properties?.action_link;
+    
+    if (!resetLink) {
+      return NextResponse.json({ error: "Lien de réinitialisation non généré." }, { status: 500 });
+    }
 
     await resend.emails.send({
       from: "Bibble AI <onboarding@resend.dev>", // Remplacez par votre domaine vérifié Resend
