@@ -24,14 +24,14 @@ export function Testimonials() {
           <h2 className="text-3xl font-bold md:text-4xl">
             Ceux qui scalent déjà leurs créatives avec nous
           </h2>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-0 flex justify-center">
             <img 
               src="/trustpilot.webp" 
               alt="Trustpilot" 
-              className="h-12 w-auto md:h-16"
+              className="h-36 w-auto md:h-48"
             />
           </div>
-          <p className="mx-auto mt-6 max-w-2xl text-muted-foreground">
+          <p className="mx-auto mt-0 max-w-2xl text-muted-foreground">
             Découvrez pourquoi les e-commerçants et agences choisissent Bibble AI.
           </p>
         </div>
