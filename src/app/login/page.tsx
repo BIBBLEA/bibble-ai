@@ -18,6 +18,8 @@ function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,6 +59,28 @@ function LoginForm() {
         if (error) throw error;
         window.location.href = redirectTo;
       }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Une erreur est survenue";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail.toLowerCase().trim(), {
+        redirectTo: `${window.location.origin}/auth/update-password`,
+      });
+      if (error) throw error;
+      setMessage("Un lien de réinitialisation a été envoyé à votre adresse e-mail.");
+      setIsForgotPassword(false);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -154,6 +178,14 @@ function LoginForm() {
             >
               Mot de passe {isSignUp && "*"}
             </label>
+            <Link
+              href="#"
+              onClick={() => setIsForgotPassword(true)}
+              className="text-sm text-primary hover:underline block text-right mt-1"
+            >
+              Mot de passe oublié ?
+            </Link>
+            </label>
             <input
               id="password"
               type="password"
@@ -213,6 +245,42 @@ function LoginForm() {
               : "Se connecter"}
           </Button>
         </form>
+
+        {isForgotPassword && (
+          <form onSubmit={handleForgotPassword} className="mt-6 space-y-4">
+            <div>
+              <label
+                htmlFor="forgotPasswordEmail"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                Email
+              </label>
+              <input
+                id="forgotPasswordEmail"
+                type="email"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                required
+                className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="vous@exemple.com"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "Chargement..." : "Envoyer le lien de réinitialisation"}
+            </Button>
+            <button
+              onClick={() => setIsForgotPassword(false)}
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground mt-4"
+            >
+              Annuler
+            </button>
+          </form>
+        )}
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
