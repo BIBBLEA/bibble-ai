@@ -4,11 +4,9 @@ export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background">
       <div className="mx-auto max-w-7xl px-6 py-12">
-        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex flex-col items-center gap-2 md:items-start">
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Bibble AI Logo" className="h-32 w-auto" />
-            </div>
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-2 md:flex-row">
+            <img src="/logo.png" alt="Bibble AI Logo" className="h-32 w-auto" />
             <p className="text-sm text-muted-foreground">
               Vidéos publicitaires IA en quelques secondes.
             </p>
