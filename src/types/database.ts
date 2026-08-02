@@ -1,3 +1,6 @@
+// Types générés à partir du schéma Supabase
+// Ces types reflètent exactement la structure des tables en base
+
 export type Database = {
   public: {
     Tables: {

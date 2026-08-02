@@ -76,7 +76,7 @@ function LoginForm() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail.toLowerCase().trim(), {
-        redirectTo: "https://www.bibble-ai.com/reset-password",
+        redirectTo: `${window.location.origin}/auth/update-password`,
       });
       if (error) throw error;
       setMessage("Un lien de réinitialisation a été envoyé à votre adresse e-mail.");
@@ -178,6 +178,14 @@ function LoginForm() {
             >
               Mot de passe {isSignUp && "*"}
             </label>
+            <Link
+              href="#"
+              onClick={() => setIsForgotPassword(true)}
+              className="text-sm text-primary hover:underline block text-right mt-1"
+            >
+              Mot de passe oublié ?
+            </Link>
+            </label>
             <input
               id="password"
               type="password"
@@ -188,13 +196,6 @@ function LoginForm() {
               className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="••••••••"
             />
-            <Link
-              href="#"
-              onClick={() => setIsForgotPassword(true)}
-              className="text-sm text-primary hover:underline block text-right mt-1"
-            >
-              Mot de passe oublié ?
-            </Link>
           </div>
 
           {isSignUp && (
