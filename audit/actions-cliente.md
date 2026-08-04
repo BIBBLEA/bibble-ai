@@ -111,15 +111,10 @@ Détail complet des URLs concernées : [urls-callback.md](./supabase/urls-callba
 
 ---
 
-## 6. 🟡 Domaine — redirection de l'apex
+## 6. ✅ Domaine — redirection de l'apex
 
-Vérifier que `https://bibble-ai.com` (sans `www`) redirige bien vers `https://www.bibble-ai.com`.
-
-Sans cette redirection, un visiteur arrivé sur l'adresse sans `www` se retrouve déconnecté au retour
-d'un lien e-mail : les sessions ne sont pas partagées entre les deux domaines.
-
-Réglage dans Vercel → Settings → Domains (ajouter `bibble-ai.com` avec l'option « Redirect to
-www.bibble-ai.com »).
+Vérifié le 2026-08-04 : `bibble-ai.com` redirige bien vers `https://www.bibble-ai.com`
+(redirection permanente 308, en HTTP comme en HTTPS). Rien à faire.
 
 ---
 
@@ -157,4 +152,4 @@ de cause.
    variables Vercel (§5). Le DNS (§4) n'appelle aucune action obligatoire.
 2. **Dans la foulée** : passage en production Stripe — le compte étant activé (§1), il ne reste que
    la partie technique, de mon côté.
-3. **Avant lancement** : redirection de domaine (§6), décision sur l'offre Supabase (§7).
+3. **Avant lancement** : décision sur l'offre Supabase (§7).

@@ -111,9 +111,9 @@ password » — visibles dans les logs Resend).
 - [ ] **A6.2** Ajouter `https://www.bibble-ai.com/auth/update-password` et
       `/api/auth/callback` aux Redirect URLs Supabase (le wildcard `/**` les couvre déjà, mais une
       entrée explicite documente l'intention)
-- [ ] **A6.3** Décider du domaine canonique : le Site URL Supabase pointe sur `www.bibble-ai.com`
-      alors que le webhook Stripe de test vise `bibble-ai-kappa.vercel.app`. Uniformiser sur le
-      domaine de production et ajouter une redirection `bibble-ai.com` → `www.bibble-ai.com`
+- [ ] **A6.3** Domaine canonique : `www.bibble-ai.com`. La redirection depuis l'apex est déjà en
+      place (308, vérifiée le 2026-08-04). Reste à uniformiser le webhook Stripe, qui vise encore
+      `bibble-ai-kappa.vercel.app` en test — le webhook live devra pointer sur le domaine de prod.
 - [ ] **A6.4** Trancher le sort de `RESEND_API_KEY` : plus aucun code ne l'utilise depuis les reverts.
       Si l'on s'en tient au SMTP Supabase (recommandé — un seul canal d'envoi), révoquer la clé
       « Vercel Integration » **et déconnecter l'intégration Vercel** dans Resend (Settings →

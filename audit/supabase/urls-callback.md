@@ -16,9 +16,8 @@ Toutes les URLs de ce document utilisent ce domaine. Le domaine Vercel
 `https://bibble-ai-kappa.vercel.app` reste valide (préproduction) mais **ne doit plus être utilisé
 dans les configurations de production**.
 
-À vérifier : `bibble-ai.com` (sans `www`) doit rediriger vers `https://www.bibble-ai.com`
-— sinon un utilisateur arrivé sur l'apex sera déconnecté au retour d'un e-mail (les cookies de
-session ne sont pas partagés entre les deux domaines).
+`bibble-ai.com` (sans `www`) redirige déjà vers `https://www.bibble-ai.com` — vérifié le
+2026-08-04 (redirection permanente 308).
 
 ---
 
@@ -162,7 +161,6 @@ Vérifié le 2026-08-04 (interrogation DNS directe) — **rien à faire** :
 
 ## Récapitulatif des actions
 
-- [ ] Vérifier la redirection `bibble-ai.com` → `www.bibble-ai.com`
 - [ ] Ajouter les 3 Redirect URLs explicites dans Supabase
 - [ ] Régler / confirmer **Email OTP Expiration** à 3600 s
 - [ ] Coller les 6 templates d'e-mails (voir [email-templates/](./email-templates/README.md))
