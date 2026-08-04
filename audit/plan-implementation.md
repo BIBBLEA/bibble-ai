@@ -117,19 +117,21 @@ Les six modèles français sont écrits, collés dans Supabase et vérifiés en 
 
 ## A6 — URLs de callback et variables d'environnement
 
-- [ ] **A6.1** Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production) = `https://www.bibble-ai.com` —
-      c'est cette valeur qui construit les `redirectTo`
+- [x] **A6.1** ~~Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production)~~ — fait le 2026-08-04, ainsi
+      que `SUPABASE_SERVICE_ROLE_KEY` (suppression de compte) et l'ajout de `ADMIN_EMAIL` =
+      `lealaref6@gmail.com`, qui rend le portail d'administration de nouveau utilisable. Projet
+      redéployé, les variables n'étant lues qu'au build.
 - [x] **A6.2** ~~Ajouter `https://www.bibble-ai.com/auth/update-password` et `/api/auth/callback` aux
       Redirect URLs Supabase~~ — fait le 2026-08-04 : les deux entrées sont enregistrées (5 URLs au
       total). Le wildcard `/**` les couvrait déjà, l'ajout documente l'intention.
 - [ ] **A6.3** Domaine canonique : `www.bibble-ai.com`. La redirection depuis l'apex est déjà en
       place (308, vérifiée le 2026-08-04). Reste à uniformiser le webhook Stripe, qui vise encore
       `bibble-ai-kappa.vercel.app` en test — le webhook live devra pointer sur le domaine de prod.
-- [ ] **A6.4** Trancher le sort de `RESEND_API_KEY` : plus aucun code ne l'utilise depuis les reverts.
-      Si l'on s'en tient au SMTP Supabase (recommandé — un seul canal d'envoi), révoquer la clé
-      « Vercel Integration » **et déconnecter l'intégration Vercel** dans Resend (Settings →
-      Integrations → *Revoke access*) : c'est elle qui a créé la clé et poussé la variable, la
-      supprimer seule la ferait réapparaître. Faisable avec notre accès Resend (rôle Member).
+- [x] **A6.4** ~~Trancher le sort de `RESEND_API_KEY`~~ — tranché : on s'en tient au SMTP Supabase,
+      un seul canal d'envoi. La variable est supprimée de Vercel (2026-08-04).
+      **Reste à faire côté Resend** : révoquer la clé « Vercel Integration » **et déconnecter
+      l'intégration Vercel** (Settings → Integrations → *Revoke access*). C'est elle qui a créé la
+      clé et poussé la variable — sans cette étape, les deux réapparaîtront au prochain déploiement.
 - [x] **A6.5** ~~Vérifier la présence d'un enregistrement DNS **DMARC**~~ — vérifié le 2026-08-04 :
       `_dmarc.bibble-ai.com` = `v=DMARC1; p=reject;`. SPF, DKIM et DMARC sont en place, rien à faire.
 

@@ -41,23 +41,23 @@ jour les Redirect URLs et les modèles sans manipulation de votre part.
 
 ---
 
-## 3. Vercel — variables d'environnement 🤝
+## 3. ✅ Vercel — variables d'environnement — fait
 
 **Où** : `https://vercel.com` → projet `bibble-ai` → Settings → Environment Variables
 
-Un accès a été ouvert le 2026-08-04 : ces points sont désormais réalisables côté développement.
+Fait le 2026-08-04.
 
-- [ ] **Ajouter** `ADMIN_EMAIL` (Production) — absente, le portail d'administration est donc
-      inutilisable en production. Valeur attendue : l'adresse **exacte d'un compte utilisateur du
-      site** ; `lealaref6@gmail.com` convient (compte existant, vérifié). Le code compare cette
-      valeur à l'e-mail de l'utilisateur connecté, sans tolérance de casse ni liste multiple.
-- [ ] **Vérifier** `NEXT_PUBLIC_APP_URL` = `https://www.bibble-ai.com` (Production). Sans valeur, le
-      retour de paiement pointe vers `localhost`
-- [ ] **Vérifier** `SUPABASE_SERVICE_ROLE_KEY` (Production) — sans elle, la suppression de compte
-      RGPD renvoie une erreur de configuration
-- [ ] **Supprimer** `RESEND_API_KEY` — plus utilisée par le code (lié au §2)
-- [ ] **Redéployer** après modification (Deployments → ⋯ → Redeploy) : les variables ne sont lues
-      qu'au build
+- [x] **Ajouter** `ADMIN_EMAIL` (Production) = `lealaref6@gmail.com` — le portail d'administration
+      est de nouveau utilisable. Le code compare cette valeur à l'e-mail de l'utilisateur connecté :
+      changer l'adresse de ce compte ferait perdre l'accès admin.
+- [x] **Vérifier** `NEXT_PUBLIC_APP_URL` = `https://www.bibble-ai.com` (Production)
+- [x] **Vérifier** `SUPABASE_SERVICE_ROLE_KEY` (Production) — présente, la suppression de compte RGPD
+      est opérante
+- [x] **Supprimer** `RESEND_API_KEY` — plus utilisée par aucun code
+- [x] **Redéployer** — les variables ne sont lues qu'au build
+
+⚠️ `RESEND_API_KEY` **réapparaîtra** au prochain déploiement tant que l'intégration Vercel n'est pas
+déconnectée côté Resend : c'est elle qui pousse la variable. Voir §2.
 
 Détail des URLs concernées : [supabase/urls-callback.md](./supabase/urls-callback.md).
 
