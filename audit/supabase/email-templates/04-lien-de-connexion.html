@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>Votre lien de connexion</title>
+</head>
+<body style="margin:0; padding:0; background-color:#09090b; -webkit-font-smoothing:antialiased;">
+
+<!-- Texte d'aperçu affiché dans la liste des messages (invisible à l'ouverture) -->
+<div style="display:none; font-size:1px; color:#09090b; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+  Connectez-vous à Bibble AI en un clic, sans mot de passe.
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#09090b" style="background-color:#09090b; margin:0; padding:0;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px;">
+
+        <tr>
+          <td bgcolor="#18181b" style="background-color:#18181b; border:1px solid #27272a; border-radius:16px; padding:40px 32px;">
+
+            <h1 style="margin:0 0 16px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:24px; line-height:32px; font-weight:700; color:#fafafa;">
+              Votre lien de connexion
+            </h1>
+
+            <p style="margin:0 0 32px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:26px; color:#d4d4d8;">
+              Cliquez sur le bouton ci-dessous pour vous connecter à votre compte Bibble&nbsp;AI.
+              Aucun mot de passe n'est nécessaire.
+            </p>
+
+            <!-- Bouton -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 32px auto;">
+              <tr>
+                <td bgcolor="#7c3aed" style="background-color:#7c3aed; border-radius:10px;">
+                  <a href="{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">
+                    Me connecter
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Lien de secours -->
+            <p style="margin:0 0 8px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a1a1aa;">
+              Le bouton ne fonctionne pas&nbsp;? Copiez ce lien dans votre navigateur&nbsp;:
+            </p>
+            <p style="margin:0 0 28px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a78bfa; word-break:break-all;">
+              {{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard
+            </p>
+
+            <!-- Separateur -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td height="1" bgcolor="#27272a" style="background-color:#27272a; height:1px; line-height:1px; font-size:0;">&nbsp;</td></tr>
+            </table>
+
+            <p style="margin:24px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:21px; color:#a1a1aa;">
+              Ce lien est valable <strong style="color:#d4d4d8;">1&nbsp;heure</strong> et ne fonctionne
+              qu'une seule fois. Ne le transmettez à personne&nbsp;: il donne accès à votre compte.
+            </p>
+            <p style="margin:12px 0 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:21px; color:#a1a1aa;">
+              Vous n'avez pas demandé à vous connecter&nbsp;? Ignorez cet e-mail.
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- Pied de page -->
+        <tr>
+          <td align="center" style="padding:28px 16px 0 16px;">
+            <p style="margin:0 0 10px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#71717a;">
+              <strong style="color:#a1a1aa;">Bibble AI</strong> — vidéos publicitaires générées par IA
+            </p>
+            <p style="margin:0 0 10px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:20px; color:#71717a;">
+              <a href="https://www.bibble-ai.com" style="color:#71717a; text-decoration:underline;">www.bibble-ai.com</a>
+              &nbsp;·&nbsp;
+              <a href="https://www.bibble-ai.com/mentions-legales" style="color:#71717a; text-decoration:underline;">Mentions légales</a>
+              &nbsp;·&nbsp;
+              <a href="https://www.bibble-ai.com/politique-de-confidentialite" style="color:#71717a; text-decoration:underline;">Confidentialité</a>
+            </p>
+            <p style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:20px; color:#52525b;">
+              Cet e-mail vous est envoyé automatiquement, merci de ne pas y répondre.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
