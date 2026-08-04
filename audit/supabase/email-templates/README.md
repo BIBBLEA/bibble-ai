@@ -1,6 +1,6 @@
 # Modèles d'e-mails Bibble AI — mode d'emploi
 
-> Document destiné à la cliente — 2026-08-04
+> 2026-08-04
 > Ces 6 fichiers HTML remplacent les modèles Supabase par défaut (aujourd'hui en anglais, sans logo).
 > Voir aussi : [actions-cliente.md](../../actions-cliente.md) · [urls-callback.md](../urls-callback.md)
 
@@ -34,7 +34,7 @@ Puis **Save** sur chaque onglet — la sauvegarde est indépendante d'un modèle
 
 - **Indispensables aujourd'hui** : *Confirm signup* et *Reset password* — ce sont les deux seuls
   e-mails réellement envoyés par le site. Le modèle *Confirm signup* sert aussi au **renvoi** de
-  l'e-mail de confirmation (fonctionnalité en cours de développement de mon côté).
+  l'e-mail de confirmation (fonctionnalité en cours de développement).
 - **Bientôt utilisé** : *Change email address* — dès la mise en ligne de la page « Mon compte ».
 - **Par sécurité** : *Magic link*, *Reauthentication* et *Invite user* ne sont pas utilisés
   aujourd'hui, mais s'ils venaient à être activés un jour, l'utilisateur recevrait un e-mail en
@@ -74,11 +74,10 @@ fonctionnerait plus.
 ## Points à vérifier avant de coller
 
 1. **Adresse de contact** — les modèles affichent `contact@bibble-ai.com` en pied de page.
-   Si ce n'est pas la bonne adresse, la remplacer partout (recherche/remplacement dans les 6 fichiers)
-   ou me le signaler et je m'en charge.
+   Si ce n'est pas la bonne adresse, la remplacer partout (recherche/remplacement dans les 6 fichiers).
 2. **Durée de validité** — les textes annoncent « ce lien est valable 1 heure ». Cela correspond au
    réglage **Email OTP Expiration = 3600 secondes** (Authentication → Providers → Email).
-   Si vous changez ce réglage, il faut corriger la phrase dans les modèles concernés.
+   Toute autre valeur impose de corriger cette phrase dans les modèles concernés.
 3. **Logo** — chargé depuis `https://www.bibble-ai.com/logo.png`. Il doit rester accessible
    publiquement à cette adresse, sinon un cadre vide s'affichera (le texte de l'e-mail reste lisible :
    la mise en page ne dépend pas de l'image).
@@ -99,7 +98,7 @@ fonctionnerait plus.
 
 ---
 
-## Options possibles (à me demander)
+## Options disponibles
 
 ### Personnaliser avec le prénom
 
@@ -119,8 +118,8 @@ la formule de repli doit être testée avant mise en production.
 
 Supabase peut aussi envoyer un e-mail lors d'un **changement de mot de passe** ou d'un
 **changement d'adresse** (« quelqu'un vient de modifier votre compte »). Ces notifications sont
-désactivées aujourd'hui. Si vous souhaitez les activer, dites-le moi : je fournirai les deux
-modèles correspondants dans le même style.
+désactivées aujourd'hui. Les activer suppose de fournir les deux modèles correspondants, dans le
+même style — à demander si besoin.
 
 ---
 
@@ -131,9 +130,9 @@ autre appareil que celui de l'inscription** : s'inscrire sur ordinateur puis ouv
 depuis son téléphone ne fonctionne pas. C'est un problème connu, corrigé dans les développements en
 cours côté application.
 
-Quand ce correctif sera déployé, je vous transmettrai la **version 2** des modèles *Confirm signup*
-et *Reset password*. La modification se limitera à une ligne par modèle (l'adresse du lien) — le
-design et les textes resteront identiques.
+Une **version 2** des modèles *Confirm signup* et *Reset password* sera fournie au déploiement de
+ce correctif. La modification se limitera à une ligne par modèle (l'adresse du lien) — design et
+textes resteront identiques.
 
 **Il n'y a rien à faire à ce sujet pour l'instant** : les modèles fournis ici fonctionnent avec le
 site tel qu'il est aujourd'hui.

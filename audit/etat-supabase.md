@@ -29,7 +29,7 @@
 1. **Aucun flux « mot de passe oublié » côté application.** Le code (`/api/auth/forgot-password`, `/auth/update-password`, lien sur la page login) a été supprimé par des reverts les 2–3 août (`baa348d`, `02649d9`, `a7e6962`). La page `/login` n'a aucun lien de réinitialisation. → À réimplémenter, de préférence via `supabase.auth.resetPasswordForEmail()` (l'e-mail partira automatiquement par le SMTP Resend déjà configuré, sans dépendre de la clé API Resend côté Vercel).
 2. **Templates d'e-mails par défaut, en anglais** (« Confirm your email address », « Reset your password »). À traduire/brander en français dans Authentication → Emails → Templates.
 3. **Rate limit 30 e-mails/h** : suffisant pour le lancement, mais à surveiller ; à augmenter si campagne d'acquisition (configurable maintenant que le SMTP custom est actif).
-4. **Plan Free / instance Nano en production** : pas de PITR, pause possible après inactivité, ressources limitées. À discuter avec la cliente (le SaaS encaissera des paiements réels).
+4. **Plan Free / instance Nano en production** : pas de PITR, pause possible après inactivité, ressources limitées. Décision à prendre (le SaaS encaissera des paiements réels).
 5. **RLS non audité en détail** dans cette passe — à vérifier avant lancement (les routes API utilisent la `service_role key`, qui contourne RLS).
 
 ## Références utiles

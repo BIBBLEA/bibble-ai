@@ -5,7 +5,7 @@
 
 Le plan est organisé en **deux blocs indépendants** :
 
-- **[BLOC A — Resend / E-mails & Authentification](#bloc-a--resend--e-mails--authentification)** : rendre tous les parcours e-mail fonctionnels de bout en bout (mission prioritaire de la cliente)
+- **[BLOC A — Resend / E-mails & Authentification](#bloc-a--resend--e-mails--authentification)** : rendre tous les parcours e-mail fonctionnels de bout en bout (priorité de la mission)
 - **[BLOC B — Stripe / Paiements & Crédits](#bloc-b--stripe--paiements--crédits)** : sécurité des crédits, idempotence des webhooks, passage en production
 
 ---
@@ -199,9 +199,9 @@ password » — visibles dans les logs Resend).
 - [ ] **B3.5** Rejeu depuis la sandbox (Workbench → Send test events) : double envoi du même événement
       → un seul traitement ; vérifier les périodes en base
 
-## B4 — Passage en production Stripe (dépend de la cliente)
+## B4 — Passage en production Stripe
 
-- [x] **B4.1** ✅ **Cliente** : activation du compte Stripe live `acct_1Tr0lOF37MrM9Z0l` — **faite**
+- [x] **B4.1** ✅ Activation du compte Stripe live `acct_1Tr0lOF37MrM9Z0l` — **faite**
       (confirmée le 2026-08-04). Les étapes B4.2 à B4.6 sont donc débloquées ; il me faut un accès au
       dashboard en mode live (ou, a minima, le secret `whsec_` du webhook de production).
 - [ ] **B4.2** Recréer les 3 produits × 2 périodicités en mode live et récupérer les 6 price IDs
@@ -228,7 +228,7 @@ BLOC B  B0 (faille RLS)   ─── à traiter immédiatement ──────
                               nécessite un accès Stripe en mode live
 ```
 
-**À demander à la cliente** : les accès et actions administratives sont regroupés dans
+**Accès et actions administratives** : regroupés dans
 [actions-cliente.md](./actions-cliente.md). L'activation du compte Stripe live (B4.1) est faite ;
 le point ouvert est désormais l'accès au dashboard live pour créer tarifs et webhook.
 

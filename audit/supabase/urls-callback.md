@@ -1,6 +1,6 @@
 # URLs de callback et de redirection à configurer
 
-> Document destiné à la cliente — mis à jour le 2026-08-04 (branche `fix-stripe-resend`)
+> Mis à jour le 2026-08-04 (branche `fix-stripe-resend`)
 > Manipulations à faire dans les interfaces web (Supabase, Vercel, Stripe).
 > Voir aussi : [actions-cliente.md](../actions-cliente.md) · [email-templates/](./email-templates/README.md)
 
@@ -54,7 +54,7 @@ Dashboard : projet `bibble-ai` → Settings → Environment Variables
 | `ADMIN_EMAIL` | Production | l'adresse administratrice | **absente** — sans elle, le portail admin est inaccessible en production |
 | `NEXT_PUBLIC_APP_URL` | Production | `https://www.bibble-ai.com` | à vérifier |
 | `NEXT_PUBLIC_APP_URL` | Preview | `https://bibble-ai-kappa.vercel.app` | à vérifier |
-| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md §2](../actions-cliente.md#2-resend--révoquer-la-clé-et-lintégration-inutilisées-)) |
+| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md §2](../actions-cliente.md#2-resend--ménage-et-sécurité-du-compte-)) |
 
 ⚠️ Sans valeur, `NEXT_PUBLIC_APP_URL` retombe sur `http://localhost:3000` : les clients seraient
 renvoyés vers une adresse locale après un paiement.
@@ -84,8 +84,8 @@ customer.subscription.updated
 customer.subscription.deleted
 ```
 
-Puis copier le secret de signature (`whsec_…`) affiché à la création et me le transmettre, pour la
-variable `STRIPE_WEBHOOK_SECRET` (Production).
+Puis récupérer le secret de signature (`whsec_…`) affiché à la création : il alimente la variable
+`STRIPE_WEBHOOK_SECRET` (Production).
 
 Les URLs de retour Stripe (paiement réussi, annulé, sortie du portail client) sont construites
 automatiquement à partir de `NEXT_PUBLIC_APP_URL` — aucune saisie manuelle, d'où l'importance du §3.
@@ -99,4 +99,4 @@ automatiquement à partir de `NEXT_PUBLIC_APP_URL` — aucune saisie manuelle, d
 - [ ] Coller les 6 templates d'e-mails (voir [email-templates/](./email-templates/README.md))
 - [ ] Ajouter `ADMIN_EMAIL` sur Vercel (Production)
 - [ ] Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production **et** Preview)
-- [ ] Créer le webhook Stripe live + transmettre le `whsec_` *(ou me donner l'accès au dashboard)*
+- [ ] Créer le webhook Stripe live et transmettre le `whsec_` *(ou ouvrir un accès au dashboard)*

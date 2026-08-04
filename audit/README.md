@@ -13,13 +13,13 @@
 | [etat-resend.md](./etat-resend.md) | Détail Resend — domaine vérifié, envois délivrés ; les échecs récents viennent de tests faits avec `vous@example.com` |
 | [etat-stripe.md](./etat-stripe.md) | Détail Stripe — compte live **activé le 2026-08-04** ; restent les tarifs live, le webhook de production et la bascule des clés |
 
-## Documents destinés à la cliente
+## Documents de configuration
 
 Tout ce qui ne peut pas être fait depuis le code (comptes tiers, DNS, variables d'environnement,
 interfaces d'administration) est regroupé ici :
 
 | Document | Contenu |
 |---|---|
-| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions à réaliser par la cliente**, par ordre d'urgence — templates e-mail, ménage et sécurité Resend, variables Vercel, offre Supabase |
+| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions de configuration** (accès administratifs, comptes tiers) — templates e-mail, ménage et sécurité Resend, variables Vercel, offre Supabase |
 | [urls-callback.md](./supabase/urls-callback.md) | **Toutes les URLs à configurer** : Redirect URLs Supabase, webhooks Stripe, variables Vercel, DNS |
 | [email-templates/](./supabase/email-templates/README.md) | **6 modèles d'e-mails HTML en français** aux couleurs du site, à coller dans les templates Supabase (+ mode d'emploi) |
