@@ -98,7 +98,7 @@ vérifier les variables Vercel (A6) et dérouler la recette (A7).
 Actuellement les templates par défaut, **en anglais** (« Confirm your email address », « Reset your
 password » — visibles dans les logs Resend).
 
-- [ ] **A5.1** Traduire et brander **Confirm sign up** (français, logo Bibble AI, ton de la marque)
+- [ ] **A5.1** Traduire et brander **Confirm sign up** (français, couleurs Bibble AI, ton de la marque)
 - [ ] **A5.2** Traduire et brander **Reset password**
 - [ ] **A5.3** Traduire et brander **Change email address**
 - [ ] **A5.4** Traduire **Magic link** et **Reauthentication** (non utilisés aujourd'hui, mais évite

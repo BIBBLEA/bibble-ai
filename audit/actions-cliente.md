@@ -10,7 +10,7 @@
 ## 1. Supabase — templates d'e-mails en français 🤝
 
 Les e-mails partants sont les modèles Supabase par défaut, **en anglais** (« Confirm your email
-address »), sans logo ni identité visuelle.
+address »), sans aucune mise en forme ni identité visuelle.
 
 **Où** : `https://supabase.com/dashboard/project/ixalcjbunskraviicnum/auth/templates`
 **Quoi** : les 6 modèles HTML sont dans [`supabase/email-templates/`](./supabase/email-templates/README.md)

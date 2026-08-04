@@ -1,7 +1,8 @@
 # Modèles d'e-mails Bibble AI — mode d'emploi
 
 > 2026-08-04
-> Ces 6 fichiers HTML remplacent les modèles Supabase par défaut (aujourd'hui en anglais, sans logo).
+> Ces 6 fichiers HTML remplacent les modèles Supabase par défaut, aujourd'hui en anglais et sans
+> aucune mise en forme.
 > Voir aussi : [actions-cliente.md](../../actions-cliente.md) · [urls-callback.md](../urls-callback.md)
 
 ## ⚠️ À lire avant toute manipulation — quand coller ces modèles
@@ -55,7 +56,9 @@ Puis **Save** sur chaque onglet — la sauvegarde est indépendante d'un modèle
 
 ## Ce que contiennent les modèles
 
-- identité visuelle du site (fond sombre, violet Bibble AI, logo depuis `www.bibble-ai.com/logo.png`) ;
+- identité visuelle du site (fond sombre, violet Bibble AI) — **aucune image** : les modèles reposent
+  uniquement sur du texte et des couleurs, ce qui évite les cadres vides dans les messageries qui
+  bloquent le chargement des images par défaut ;
 - textes en français, tutoiement exclu (vouvoiement, ton sobre) ;
 - un bouton d'action **et** le lien en clair juste en dessous (certaines messageries d'entreprise
   bloquent les boutons) ;
@@ -143,9 +146,9 @@ ce document sur l'ordre des opérations.
 3. **Durée de validité** — les textes annoncent « ce lien est valable 1 heure ». Cela correspond au
    réglage **Email OTP Expiration = 3600 secondes** (Authentication → Providers → Email).
    Toute autre valeur impose de corriger cette phrase dans les modèles concernés.
-4. **Logo** — chargé depuis `https://www.bibble-ai.com/logo.png`. Il doit rester accessible
-   publiquement à cette adresse, sinon un cadre vide s'affichera (le texte de l'e-mail reste lisible :
-   la mise en page ne dépend pas de l'image).
+4. **Aucune image** — les modèles ne chargent ni logo ni illustration. Rien à héberger, rien à
+   maintenir accessible : l'e-mail s'affiche à l'identique même quand la messagerie bloque les
+   images.
 
 ---
 
@@ -154,7 +157,7 @@ ce document sur l'ordre des opérations.
 1. Créer un compte de test sur `https://www.bibble-ai.com/login` avec **une vraie adresse**
    (Gmail ou Outlook) — **jamais** une adresse en `@example.com` ou `@exemple.com` :
    Resend les rejette et aucun e-mail ne partira.
-2. Vérifier la réception, l'affichage (logo, bouton violet, accents corrects) et le fonctionnement
+2. Vérifier la réception, l'affichage (bouton violet, accents corrects) et le fonctionnement
    du bouton.
 3. Regarder aussi dans le dossier **spam / courrier indésirable** : l'authentification du domaine
    (SPF, DKIM, DMARC) est complète, un classement en spam viendrait donc du contenu ou de la
