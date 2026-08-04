@@ -27,8 +27,10 @@ et il comporte des défauts.
 | Changement d'adresse e-mail | 🔴 Absent | ✅ Section « Mon compte » + double confirmation |
 | Page « Mon compte » | 🔴 Absente — aucune page profil dans l'app | ✅ `/dashboard/account`, avec suppression de compte |
 
-Reste à faire côté configuration : coller les modèles d'e-mails dans Supabase (A5.1 à A5.4, A5.6),
-vérifier les variables Vercel (A6) et dérouler la recette (A7).
+Branche fusionnée dans `main` et déployée. Les modèles d'e-mails sont collés dans Supabase et les
+parcours inscription, mot de passe oublié et changement d'adresse ont été validés en conditions
+réelles. Reste : les variables d'environnement Vercel (A6), les notifications de sécurité (A5.6) et
+la fin de la recette (A7).
 
 ## A1 — Corriger le parcours d'inscription existant
 
@@ -95,14 +97,14 @@ vérifier les variables Vercel (A6) et dérouler la recette (A7).
 
 ## A5 — Templates d'e-mails Supabase
 
-Actuellement les templates par défaut, **en anglais** (« Confirm your email address », « Reset your
-password » — visibles dans les logs Resend).
+Les six modèles français sont écrits, collés dans Supabase et vérifiés en conditions réelles.
 
-- [ ] **A5.1** Traduire et brander **Confirm sign up** (français, couleurs Bibble AI, ton de la marque)
-- [ ] **A5.2** Traduire et brander **Reset password**
-- [ ] **A5.3** Traduire et brander **Change email address**
-- [ ] **A5.4** Traduire **Magic link** et **Reauthentication** (non utilisés aujourd'hui, mais évite
-      un e-mail anglais surprise si activés plus tard)
+- [x] **A5.1** ~~Traduire et brander **Confirm sign up**~~ — collé et testé : e-mail reçu, lien de
+      confirmation fonctionnel
+- [x] **A5.2** ~~Traduire et brander **Reset password**~~ — collé et testé de bout en bout
+- [x] **A5.3** ~~Traduire et brander **Change email address**~~ — collé et testé (double confirmation)
+- [x] **A5.4** ~~Traduire **Magic link** et **Reauthentication**~~ — collés. Non utilisés aujourd'hui :
+      ils évitent un e-mail anglais surprise si ces parcours sont activés plus tard.
 - [x] **A5.5** ~~Si A1.3 option (a) est retenue : adapter les templates au format `token_hash`
       (`{{ .TokenHash }}`) au lieu de `{{ .ConfirmationURL }}`~~ — fait le 2026-08-04 : les 5 modèles
       à lien pointent sur `{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=…`
@@ -134,17 +136,20 @@ password » — visibles dans les logs Resend).
 
 ## A7 — Recette e-mails
 
-- [ ] **A7.1** Inscription complète avec une **vraie adresse Gmail** : réception → confirmation →
-      accès au dashboard
-- [ ] **A7.2** Même parcours avec **Outlook** (délivrabilité différente)
-- [ ] **A7.3** Parcours PKCE cross-navigateur : s'inscrire sur un navigateur, ouvrir le lien sur un
-      autre — doit fonctionner ou afficher un message clair
-- [ ] **A7.4** Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion
-- [ ] **A7.5** Renvoi de confirmation, changement de mot de passe connecté, changement d'e-mail
-- [ ] **A7.6** Cas d'erreur : lien expiré, lien déjà utilisé, e-mail inexistant, double demande en
-      moins de 60 s
-- [ ] **A7.7** Contrôler la délivrabilité (pas de classement en spam) et l'absence de nouvelles
-      erreurs dans les logs Resend
+- [x] **A7.1** ~~Inscription complète avec une **vraie adresse Gmail**~~ — testé : réception →
+      confirmation → accès au tableau de bord
+- [ ] **A7.2** Même parcours avec **Outlook** (délivrabilité différente) — non testé
+- [ ] **A7.3** Parcours cross-navigateur : s'inscrire sur un navigateur, ouvrir le lien sur un autre.
+      Le format `token_hash` le rend théoriquement insensible à ce cas, mais ce n'est pas vérifié.
+- [x] **A7.4** ~~Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion~~ — testé
+- [x] **A7.5** ~~Changement d'e-mail~~ — testé. Renvoi de confirmation et changement de mot de passe
+      connecté restent à éprouver en conditions réelles.
+- [x] **A7.6** ~~Cas d'erreur~~ — vérifié en production sur les redirections du callback : absence de
+      paramètre, jeton invalide selon les cinq types, `type` inconnu, code PKCE invalide, tentative
+      de redirection hors domaine (`next=//evil.example`). Réponse neutre et verrou de 60 s confirmés
+      sur le formulaire de mot de passe oublié.
+- [ ] **A7.7** Contrôler la délivrabilité (pas de classement en spam) sur plusieurs messageries et
+      l'absence de nouvelles erreurs dans les logs Resend
 - [ ] **A7.8** Nettoyer les comptes de test non confirmés dans Supabase (côté Resend, rien à purger :
       les envois vers `example.com` ont été refusés à la validation, aucune adresse n'a été
       blacklistée)

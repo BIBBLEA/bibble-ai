@@ -7,30 +7,23 @@
 
 ---
 
-## 1. Supabase — templates d'e-mails en français 🤝
+## 1. ✅ Supabase — templates d'e-mails en français — fait
 
-Les e-mails partants sont les modèles Supabase par défaut, **en anglais** (« Confirm your email
-address »), sans aucune mise en forme ni identité visuelle.
+Les six modèles français sont collés dans Supabase et les parcours ont été validés en conditions
+réelles (inscription, mot de passe oublié, changement d'adresse). Les e-mails partaient jusque-là
+avec les modèles Supabase par défaut, en anglais et sans mise en forme.
 
 **Où** : `https://supabase.com/dashboard/project/ixalcjbunskraviicnum/auth/templates`
-**Quoi** : les 6 modèles HTML sont dans [`supabase/email-templates/`](./supabase/email-templates/README.md)
-— le README précise quel fichier va dans quel onglet, avec l'objet à saisir.
+**Source** : les 6 modèles HTML restent versionnés dans
+[`supabase/email-templates/`](./supabase/email-templates/README.md) — toute retouche future se fait
+là, puis se recolle dans l'onglet correspondant.
 
-Le collage des 6 modèles est désormais pris en charge côté développement (voir ci-dessous). Une seule
-décision reste de votre côté :
+Une seule décision reste ouverte :
 
 - [ ] Confirmer l'adresse de contact affichée en pied des e-mails (`contact@bibble-ai.com` par défaut)
 
-### ✅ Droits du compte de développement — réglé
-
-Le compte de développement est passé **Administrator** le 2026-08-04 (il était *Developer*, en
-lecture seule : « You need additional permissions »). Les Redirect URLs ont été mises à jour dans la
-foulée, et les modèles d'e-mails peuvent désormais être collés sans manipulation de votre part.
-
-**Rien à faire ici** : le collage des 6 modèles est pris en charge, mais il doit attendre la mise en
-production de la branche en cours. Les nouveaux liens (format `token_hash`) sont lus par une route
-qui n'existe pas encore en ligne : les coller avant le déploiement rendrait les confirmations
-d'inscription inopérantes.
+Le compte de développement est passé **Administrator** le 2026-08-04, ce qui a permis de mettre à
+jour les Redirect URLs et les modèles sans manipulation de votre part.
 
 ---
 
@@ -52,10 +45,16 @@ d'inscription inopérantes.
 
 **Où** : `https://vercel.com` → projet `bibble-ai` → Settings → Environment Variables
 
+Un accès a été ouvert le 2026-08-04 : ces points sont désormais réalisables côté développement.
+
 - [ ] **Ajouter** `ADMIN_EMAIL` (Production) — absente, le portail d'administration est donc
-      inutilisable en production ; l'adresse à utiliser reste à préciser
+      inutilisable en production. Valeur attendue : l'adresse **exacte d'un compte utilisateur du
+      site** ; `lealaref6@gmail.com` convient (compte existant, vérifié). Le code compare cette
+      valeur à l'e-mail de l'utilisateur connecté, sans tolérance de casse ni liste multiple.
 - [ ] **Vérifier** `NEXT_PUBLIC_APP_URL` = `https://www.bibble-ai.com` (Production). Sans valeur, le
       retour de paiement pointe vers `localhost`
+- [ ] **Vérifier** `SUPABASE_SERVICE_ROLE_KEY` (Production) — sans elle, la suppression de compte
+      RGPD renvoie une erreur de configuration
 - [ ] **Supprimer** `RESEND_API_KEY` — plus utilisée par le code (lié au §2)
 - [ ] **Redéployer** après modification (Deployments → ⋯ → Redeploy) : les variables ne sont lues
       qu'au build
