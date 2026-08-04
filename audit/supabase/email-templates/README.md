@@ -92,10 +92,9 @@ fonctionnerait plus.
    Resend les rejette et aucun e-mail ne partira.
 2. Vérifier la réception, l'affichage (logo, bouton violet, accents corrects) et le fonctionnement
    du bouton.
-3. Regarder aussi dans le dossier **spam / courrier indésirable**. L'authentification du domaine
-   (SPF, DKIM, DMARC en `p=reject`) est complète — un classement en spam viendrait alors du contenu
-   ou de la réputation d'envoi, pas de la configuration DNS (voir
-   [actions-cliente.md §4](../../actions-cliente.md#4--dns--dmarc-déjà-en-place-une-amélioration-possible)).
+3. Regarder aussi dans le dossier **spam / courrier indésirable** : l'authentification du domaine
+   (SPF, DKIM, DMARC) est complète, un classement en spam viendrait donc du contenu ou de la
+   réputation d'envoi, pas de la configuration DNS.
 4. Refaire le test avec l'autre messagerie (Gmail *et* Outlook se comportent différemment).
 
 ---
