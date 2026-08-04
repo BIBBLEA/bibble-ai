@@ -68,7 +68,6 @@ répartition : **l'essentiel du ménage Resend est de mon côté**, il ne reste 
 |---|---|
 | **Révoquer la clé API « Vercel Integration »** | Créée il y a 8 jours, **jamais utilisée** (colonne « Last used » : *No activity*). Les e-mails partent par le SMTP configuré dans Supabase, qui s'appuie sur l'autre clé — « SUPABASE », utilisée il y a 1 jour, **à ne surtout pas toucher**. |
 | **Déconnecter l'intégration Vercel** | Settings → Integrations → *Revoke access*. C'est cette intégration qui a créé la clé ci-dessus **et** poussé la variable `RESEND_API_KEY` dans Vercel. La révoquer sans la déconnecter reviendrait à la voir réapparaître. |
-| **Passer le TLS en « Enforced »** | Le domaine est en TLS *opportuniste* (chiffrement tenté, non garanti). Le mode *enforced* impose une connexion chiffrée. À valider ensemble : dans de très rares cas, un serveur de réception mal configuré refuse alors le message. |
 
 À noter : l'intégration officielle Resend ↔ Supabase n'est **pas** utilisée (le SMTP a été configuré
 à la main dans Supabase, ce qui fonctionne parfaitement). Rien à changer de ce côté.
@@ -86,51 +85,10 @@ fonctionnent plus ». Utiliser de vraies adresses (Gmail, Outlook…).
 
 ---
 
-## 4. 🟡 DNS — DMARC déjà en place, une amélioration possible
+## 4. ✅ DNS — rien à faire
 
-**Où** : dans la zone DNS du domaine `bibble-ai.com`, chez **Infomaniak** (fournisseur DNS identifié
-par Resend).
-
-L'authentification des e-mails est **complète**. Interrogation DNS du 2026-08-04 :
-
-| Enregistrement | Valeur constatée |
-|---|---|
-| DKIM (`resend._domainkey`) | Clé publique posée — *Verified* côté Resend |
-| SPF de l'expéditeur (`send.bibble-ai.com`) | `v=spf1 include:…amazonses.com ~all` — *Verified* |
-| SPF du domaine racine (`bibble-ai.com`) | `v=spf1 -all` |
-| **DMARC** (`_dmarc.bibble-ai.com`) | **`v=DMARC1; p=reject;`** |
-
-Le DMARC existe donc déjà, avec la politique **la plus stricte qui soit** (`p=reject` : tout e-mail
-prétendant venir de `bibble-ai.com` sans authentification valide est rejeté par le destinataire).
-Les e-mails Resend passent malgré cela grâce à la signature DKIM au nom de `bibble-ai.com` — les
-messages « Delivered » du 22–23 juillet le confirment.
-
-### La seule amélioration à envisager : recevoir les rapports
-
-L'enregistrement ne comporte pas de champ `rua`, c'est-à-dire **aucune adresse de rapport**.
-Conséquence : la configuration est très stricte, mais totalement aveugle. Si l'authentification
-venait à casser un jour (changement de prestataire e-mail, clé DKIM retirée, nouvel outil d'envoi
-oublié), les messages seraient **rejetés purement et simplement** chez le destinataire, sans que
-personne ne soit prévenu.
-
-Valeur suggérée :
-
-```
-Type   : TXT
-Nom    : _dmarc
-Valeur : v=DMARC1; p=reject; rua=mailto:contact@bibble-ai.com
-```
-
-Seul le champ `rua` est ajouté : la politique reste identique, rien ne change pour les envois
-actuels, mais un rapport agrégé hebdomadaire arrivera dans la boîte indiquée.
-
-> ⚠️ Point de vigilance lié à `p=reject` : **tout nouvel outil qui enverrait des e-mails au nom de
-> `bibble-ai.com` (facturation, newsletter, CRM, formulaire de contact) devra être authentifié
-> avant sa mise en service**, sans quoi ses messages seront rejetés — pas mis en spam, rejetés.
-> Le SPF du domaine racine est d'ailleurs `-all`, c'est-à-dire « ce domaine n'envoie rien
-> directement » : la configuration ne tolère aucun envoi improvisé.
-
-> 🤝 Faisable par moi si j'ai un accès au panneau Infomaniak (zone DNS uniquement).
+Vérifié le 2026-08-04 : DKIM, SPF et DMARC (`v=DMARC1; p=reject;`) sont tous en place sur
+`bibble-ai.com`. L'authentification des e-mails est complète et fonctionne.
 
 ---
 

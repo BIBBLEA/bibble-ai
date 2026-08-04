@@ -150,31 +150,13 @@ C'est la raison pour laquelle le point 3 (`NEXT_PUBLIC_APP_URL`) est important.
 
 ## 5. DNS — délivrabilité des e-mails
 
-Zone DNS du domaine `bibble-ai.com`, hébergée chez **Infomaniak**. État vérifié le 2026-08-04
-(interrogation DNS directe) :
+Vérifié le 2026-08-04 (interrogation DNS directe) — **rien à faire** :
 
-| Type | Nom | Valeur | Statut |
-|---|---|---|---|
-| DKIM | `resend._domainkey` | clé publique Resend | ✅ *Verified* |
-| SPF (expéditeur) | `send` | `v=spf1 include:…amazonses.com ~all` | ✅ *Verified* |
-| SPF (racine) | `bibble-ai.com` | `v=spf1 -all` | ✅ volontaire — la racine n'envoie rien en direct |
-| **DMARC** | `_dmarc` | `v=DMARC1; p=reject;` | ✅ présent, sans champ `rua` |
-
-**Rien à créer.** L'authentification est complète et même sévère : `p=reject` fait rejeter — et non
-classer en spam — tout e-mail non authentifié se présentant comme venant de `bibble-ai.com`.
-
-Amélioration facultative : ajouter une adresse de rapport, pour ne pas piloter cette politique à
-l'aveugle.
-
-```
-Type  : TXT
-Nom   : _dmarc
-Valeur: v=DMARC1; p=reject; rua=mailto:contact@bibble-ai.com
-```
-
-⚠️ Conséquence de `p=reject` à garder en tête : **tout futur outil envoyant des e-mails au nom du
-domaine** (facturation, newsletter, CRM, formulaire de contact) devra être authentifié — SPF et
-DKIM — avant sa mise en service, sinon ses messages n'arriveront pas du tout.
+| Type | Nom | Valeur |
+|---|---|---|
+| DKIM | `resend._domainkey` | clé publique Resend — *Verified* |
+| SPF | `send` | `v=spf1 include:…amazonses.com ~all` — *Verified* |
+| DMARC | `_dmarc` | `v=DMARC1; p=reject;` |
 
 ---
 
@@ -186,5 +168,4 @@ DKIM — avant sa mise en service, sinon ses messages n'arriveront pas du tout.
 - [ ] Coller les 6 templates d'e-mails (voir [email-templates/](./email-templates/README.md))
 - [ ] Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production **et** Preview)
 - [ ] Ajouter `ADMIN_EMAIL` sur Vercel (Production)
-- [ ] *(facultatif)* Ajouter `rua=mailto:…` à l'enregistrement DMARC existant
 - [ ] Créer le webhook Stripe live + transmettre le `whsec_` *(ou me donner l'accès au dashboard)*

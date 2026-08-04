@@ -120,10 +120,7 @@ password » — visibles dans les logs Resend).
       Integrations → *Revoke access*) : c'est elle qui a créé la clé et poussé la variable, la
       supprimer seule la ferait réapparaître. Faisable avec notre accès Resend (rôle Member).
 - [x] **A6.5** ~~Vérifier la présence d'un enregistrement DNS **DMARC**~~ — vérifié le 2026-08-04 :
-      `_dmarc.bibble-ai.com` = `v=DMARC1; p=reject;`. SPF, DKIM et DMARC sont donc tous en place.
-      Reste facultatif : ajouter un `rua=mailto:…` pour recevoir les rapports (la politique `reject`
-      est aujourd'hui appliquée sans aucune remontée). ⚠️ Avec `p=reject`, tout nouvel outil d'envoi
-      au nom de `bibble-ai.com` devra être authentifié avant mise en service.
+      `_dmarc.bibble-ai.com` = `v=DMARC1; p=reject;`. SPF, DKIM et DMARC sont en place, rien à faire.
 
 ## A7 — Recette e-mails
 
