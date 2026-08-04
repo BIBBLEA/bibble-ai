@@ -24,7 +24,7 @@ cliente. Ce point n'est donc plus bloquant — c'était le délai le plus long d
 
 - recréer les 3 offres × 2 périodicités en mode live et récupérer les 6 identifiants de tarif ;
 - créer le webhook de production vers `https://www.bibble-ai.com/api/webhooks/stripe`
-  (voir [urls-callback.md §4](./urls-callback.md#4-stripe--urls-de-webhook)) ;
+  (voir [urls-callback.md §4](./supabase/urls-callback.md#4-stripe--urls-de-webhook)) ;
 - basculer les clés et les 12 variables de tarif sur Vercel (Production).
 
 **Ce dont j'ai besoin de vous** : soit un accès au dashboard Stripe, soit — si vous préférez créer
@@ -44,7 +44,7 @@ le webhook vous-même — le secret de signature `whsec_…` affiché à sa cré
 **Où** : `https://supabase.com/dashboard/project/ixalcjbunskraviicnum/auth/templates`
 
 **Quoi** : coller les 6 modèles HTML fournis dans
-[`audit/email-templates/`](./email-templates/README.md). La marche à suivre détaillée (quel fichier
+[`audit/email-templates/`](./supabase/email-templates/README.md). La marche à suivre détaillée (quel fichier
 dans quel onglet, quel objet d'e-mail) est dans le README de ce dossier.
 
 Vérifier au passage le réglage **Email OTP Expiration** (Authentication → Providers → Email) :
@@ -86,23 +86,49 @@ fonctionnent plus ». Utiliser de vraies adresses (Gmail, Outlook…).
 
 ---
 
-## 4. 🟠 DNS — enregistrement DMARC
+## 4. 🟡 DNS — DMARC déjà en place, une amélioration possible
 
 **Où** : dans la zone DNS du domaine `bibble-ai.com`, chez **Infomaniak** (fournisseur DNS identifié
 par Resend).
 
-SPF et DKIM sont en place et vérifiés — constaté dans Resend → Domains → bibble-ai.com → Records :
-l'enregistrement DKIM (`resend._domainkey`), le MX et le TXT SPF (`send`) sont tous au statut
-*Verified*. Il manque uniquement DMARC, qui améliore nettement le classement en boîte de réception
-plutôt qu'en spam :
+L'authentification des e-mails est **complète**. Interrogation DNS du 2026-08-04 :
+
+| Enregistrement | Valeur constatée |
+|---|---|
+| DKIM (`resend._domainkey`) | Clé publique posée — *Verified* côté Resend |
+| SPF de l'expéditeur (`send.bibble-ai.com`) | `v=spf1 include:…amazonses.com ~all` — *Verified* |
+| SPF du domaine racine (`bibble-ai.com`) | `v=spf1 -all` |
+| **DMARC** (`_dmarc.bibble-ai.com`) | **`v=DMARC1; p=reject;`** |
+
+Le DMARC existe donc déjà, avec la politique **la plus stricte qui soit** (`p=reject` : tout e-mail
+prétendant venir de `bibble-ai.com` sans authentification valide est rejeté par le destinataire).
+Les e-mails Resend passent malgré cela grâce à la signature DKIM au nom de `bibble-ai.com` — les
+messages « Delivered » du 22–23 juillet le confirment.
+
+### La seule amélioration à envisager : recevoir les rapports
+
+L'enregistrement ne comporte pas de champ `rua`, c'est-à-dire **aucune adresse de rapport**.
+Conséquence : la configuration est très stricte, mais totalement aveugle. Si l'authentification
+venait à casser un jour (changement de prestataire e-mail, clé DKIM retirée, nouvel outil d'envoi
+oublié), les messages seraient **rejetés purement et simplement** chez le destinataire, sans que
+personne ne soit prévenu.
+
+Valeur suggérée :
 
 ```
 Type   : TXT
 Nom    : _dmarc
-Valeur : v=DMARC1; p=none; rua=mailto:contact@bibble-ai.com
+Valeur : v=DMARC1; p=reject; rua=mailto:contact@bibble-ai.com
 ```
 
-`p=none` = mode observation : aucun risque de blocage d'e-mails légitimes.
+Seul le champ `rua` est ajouté : la politique reste identique, rien ne change pour les envois
+actuels, mais un rapport agrégé hebdomadaire arrivera dans la boîte indiquée.
+
+> ⚠️ Point de vigilance lié à `p=reject` : **tout nouvel outil qui enverrait des e-mails au nom de
+> `bibble-ai.com` (facturation, newsletter, CRM, formulaire de contact) devra être authentifié
+> avant sa mise en service**, sans quoi ses messages seront rejetés — pas mis en spam, rejetés.
+> Le SPF du domaine racine est d'ailleurs `-all`, c'est-à-dire « ce domaine n'envoie rien
+> directement » : la configuration ne tolère aucun envoi improvisé.
 
 > 🤝 Faisable par moi si j'ai un accès au panneau Infomaniak (zone DNS uniquement).
 
@@ -121,7 +147,7 @@ Valeur : v=DMARC1; p=none; rua=mailto:contact@bibble-ai.com
 Après modification : redéployer le projet (Deployments → ⋯ → Redeploy), les variables ne sont lues
 qu'au moment du build.
 
-Détail complet des URLs concernées : [urls-callback.md](./urls-callback.md).
+Détail complet des URLs concernées : [urls-callback.md](./supabase/urls-callback.md).
 
 > 🤝 Faisable par moi avec un accès au projet Vercel.
 
@@ -170,7 +196,7 @@ de cause.
 ## Ordre conseillé
 
 1. **Cette semaine** : templates d'e-mails (§2), MFA + décision sur le ménage Resend (§3),
-   DMARC (§4), variables Vercel (§5).
+   variables Vercel (§5). Le DNS (§4) n'appelle aucune action obligatoire.
 2. **Dans la foulée** : passage en production Stripe — le compte étant activé (§1), il ne reste que
    la partie technique, de mon côté.
 3. **Avant lancement** : redirection de domaine (§6), décision sur l'offre Supabase (§7).

@@ -20,6 +20,6 @@ interfaces d'administration) est regroupé ici :
 
 | Document | Contenu |
 |---|---|
-| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions à réaliser par la cliente**, par ordre d'urgence — activation Stripe live, ménage Resend, DMARC, variables Vercel |
-| [urls-callback.md](./urls-callback.md) | **Toutes les URLs à configurer** : Redirect URLs Supabase, webhooks Stripe, variables Vercel, DNS |
-| [email-templates/](./email-templates/README.md) | **6 modèles d'e-mails HTML en français** aux couleurs du site, à coller dans les templates Supabase (+ mode d'emploi) |
+| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions à réaliser par la cliente**, par ordre d'urgence — templates e-mail, ménage et sécurité Resend, variables Vercel, offre Supabase |
+| [urls-callback.md](./supabase/urls-callback.md) | **Toutes les URLs à configurer** : Redirect URLs Supabase, webhooks Stripe, variables Vercel, DNS |
+| [email-templates/](./supabase/email-templates/README.md) | **6 modèles d'e-mails HTML en français** aux couleurs du site, à coller dans les templates Supabase (+ mode d'emploi) |

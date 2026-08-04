@@ -2,7 +2,7 @@
 
 > Document destiné à la cliente — mis à jour le 2026-08-04 (branche `fix-stripe-resend`)
 > Toutes les manipulations ci-dessous se font **dans les interfaces web** (Supabase, Vercel, Stripe).
-> Voir aussi : [actions-cliente.md](./actions-cliente.md) · [email-templates/](./email-templates/README.md)
+> Voir aussi : [actions-cliente.md](../actions-cliente.md) · [email-templates/](./email-templates/README.md)
 
 ## 0. Domaine canonique
 
@@ -94,7 +94,7 @@ Dashboard : Project `bibble-ai` → Settings → Environment Variables
 | `NEXT_PUBLIC_APP_URL` | Production | `https://www.bibble-ai.com` | **à vérifier** — c'est cette valeur qui construit les liens de retour Stripe et de réinitialisation de mot de passe |
 | `NEXT_PUBLIC_APP_URL` | Preview | `https://bibble-ai-kappa.vercel.app` | à vérifier |
 | `ADMIN_EMAIL` | Production | l'adresse administratrice | **absente** — sans elle le portail admin est inaccessible en production |
-| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md](./actions-cliente.md#3-resend)) |
+| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md](../actions-cliente.md#3-resend)) |
 
 ⚠️ Sans valeur, `NEXT_PUBLIC_APP_URL` retombe sur `http://localhost:3000` : les clients seraient
 renvoyés vers une adresse locale après un paiement.
@@ -150,22 +150,31 @@ C'est la raison pour laquelle le point 3 (`NEXT_PUBLIC_APP_URL`) est important.
 
 ## 5. DNS — délivrabilité des e-mails
 
-Chez le registrar du domaine `bibble-ai.com` :
+Zone DNS du domaine `bibble-ai.com`, hébergée chez **Infomaniak**. État vérifié le 2026-08-04
+(interrogation DNS directe) :
 
-| Type | Nom | Statut |
-|---|---|---|
-| SPF / DKIM (posés par Resend) | — | ✅ Domaine « Verified » côté Resend |
-| **DMARC** | `_dmarc.bibble-ai.com` | ❓ **à vérifier / créer** |
+| Type | Nom | Valeur | Statut |
+|---|---|---|---|
+| DKIM | `resend._domainkey` | clé publique Resend | ✅ *Verified* |
+| SPF (expéditeur) | `send` | `v=spf1 include:…amazonses.com ~all` | ✅ *Verified* |
+| SPF (racine) | `bibble-ai.com` | `v=spf1 -all` | ✅ volontaire — la racine n'envoie rien en direct |
+| **DMARC** | `_dmarc` | `v=DMARC1; p=reject;` | ✅ présent, sans champ `rua` |
 
-Enregistrement DMARC recommandé pour démarrer (mode observation, sans risque de blocage) :
+**Rien à créer.** L'authentification est complète et même sévère : `p=reject` fait rejeter — et non
+classer en spam — tout e-mail non authentifié se présentant comme venant de `bibble-ai.com`.
+
+Amélioration facultative : ajouter une adresse de rapport, pour ne pas piloter cette politique à
+l'aveugle.
 
 ```
 Type  : TXT
 Nom   : _dmarc
-Valeur: v=DMARC1; p=none; rua=mailto:contact@bibble-ai.com
+Valeur: v=DMARC1; p=reject; rua=mailto:contact@bibble-ai.com
 ```
 
-Sans DMARC, Gmail et Outlook classent plus facilement les e-mails en spam.
+⚠️ Conséquence de `p=reject` à garder en tête : **tout futur outil envoyant des e-mails au nom du
+domaine** (facturation, newsletter, CRM, formulaire de contact) devra être authentifié — SPF et
+DKIM — avant sa mise en service, sinon ses messages n'arriveront pas du tout.
 
 ---
 
@@ -177,5 +186,5 @@ Sans DMARC, Gmail et Outlook classent plus facilement les e-mails en spam.
 - [ ] Coller les 6 templates d'e-mails (voir [email-templates/](./email-templates/README.md))
 - [ ] Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production **et** Preview)
 - [ ] Ajouter `ADMIN_EMAIL` sur Vercel (Production)
-- [ ] Créer l'enregistrement DNS DMARC
+- [ ] *(facultatif)* Ajouter `rua=mailto:…` à l'enregistrement DMARC existant
 - [ ] Créer le webhook Stripe live + transmettre le `whsec_` *(ou me donner l'accès au dashboard)*

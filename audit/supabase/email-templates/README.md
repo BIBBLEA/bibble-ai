@@ -2,7 +2,7 @@
 
 > Document destiné à la cliente — 2026-08-04
 > Ces 6 fichiers HTML remplacent les modèles Supabase par défaut (aujourd'hui en anglais, sans logo).
-> Voir aussi : [actions-cliente.md](../actions-cliente.md) · [urls-callback.md](../urls-callback.md)
+> Voir aussi : [actions-cliente.md](../../actions-cliente.md) · [urls-callback.md](../urls-callback.md)
 
 ## Où coller les modèles
 
@@ -92,9 +92,10 @@ fonctionnerait plus.
    Resend les rejette et aucun e-mail ne partira.
 2. Vérifier la réception, l'affichage (logo, bouton violet, accents corrects) et le fonctionnement
    du bouton.
-3. Regarder aussi dans le dossier **spam / courrier indésirable** : si l'e-mail y atterrit,
-   c'est l'enregistrement DNS **DMARC** qui manque (voir
-   [actions-cliente.md §4](../actions-cliente.md#4--dns--enregistrement-dmarc)).
+3. Regarder aussi dans le dossier **spam / courrier indésirable**. L'authentification du domaine
+   (SPF, DKIM, DMARC en `p=reject`) est complète — un classement en spam viendrait alors du contenu
+   ou de la réputation d'envoi, pas de la configuration DNS (voir
+   [actions-cliente.md §4](../../actions-cliente.md#4--dns--dmarc-déjà-en-place-une-amélioration-possible)).
 4. Refaire le test avec l'autre messagerie (Gmail *et* Outlook se comportent différemment).
 
 ---
