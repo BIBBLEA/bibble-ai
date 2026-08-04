@@ -77,7 +77,7 @@ Ce sont des variables remplacées automatiquement par Supabase au moment de l'en
 | `{{ .TokenHashNew }}` | Le second jeton, côté nouvelle adresse (modèle *Change email address* uniquement) |
 | `{{ .Email }}` | L'adresse e-mail actuelle du compte |
 | `{{ .NewEmail }}` | La nouvelle adresse demandée (modèle *Change email address* uniquement) |
-| `{{ .Token }}` | Le code à 6 chiffres (modèle *Reauthentication* uniquement) |
+| `{{ .Token }}` | Le code numérique (modèle *Reauthentication* uniquement) — **8 chiffres** selon le réglage *Email OTP length* du projet, vérifié le 2026-08-04 |
 
 Supprimer ou modifier l'une de ces balises **casse l'e-mail** : le lien de confirmation ne
 fonctionnerait plus.

@@ -16,28 +16,21 @@ address »), sans logo ni identité visuelle.
 **Quoi** : les 6 modèles HTML sont dans [`supabase/email-templates/`](./supabase/email-templates/README.md)
 — le README précise quel fichier va dans quel onglet, avec l'objet à saisir.
 
-- [ ] Coller le modèle **Confirm signup** (prioritaire : e-mail d'inscription)
-- [ ] Coller le modèle **Reset password**
-- [ ] Coller le modèle **Change email address**
-- [ ] Coller les modèles **Magic link**, **Reauthentication** et **Invite user**
-- [ ] Vérifier **Email OTP Expiration** = `3600` secondes (Authentication → Providers → Email)
+Le collage des 6 modèles est désormais pris en charge côté développement (voir ci-dessous). Une seule
+décision reste de votre côté :
+
 - [ ] Confirmer l'adresse de contact affichée en pied des e-mails (`contact@bibble-ai.com` par défaut)
 
-### 🤝 Alternative : élever les droits du compte de développement
+### ✅ Droits du compte de développement — réglé
 
-Le compte de développement est membre de l'organisation avec le rôle **Developer** — suffisant pour
-consulter, mais **pas pour modifier** : les boutons d'enregistrement des templates et des Redirect
-URLs affichent « You need additional permissions » (vérifié le 2026-08-04).
+Le compte de développement est passé **Administrator** le 2026-08-04 (il était *Developer*, en
+lecture seule : « You need additional permissions »). Les Redirect URLs ont été mises à jour dans la
+foulée, et les modèles d'e-mails peuvent désormais être collés sans manipulation de votre part.
 
-Passer ce compte en **Administrator** permet de réaliser les points ci-dessus **et** ceux du §3 de
-[urls-callback.md](./supabase/urls-callback.md) sans manipulation manuelle.
-
-- [ ] Organisation → **Team** → menu ⋮ sur la ligne du membre → rôle **Administrator**
-
-Seul un compte **Owner** peut effectuer ce changement. Sur le plan Free, les rôles s'appliquent à
-toute l'organisation — les rôles limités à un projet sont réservés aux plans Team et Enterprise ;
-ici l'organisation ne contient que ce projet, la portée est donc identique. Administrator exclut
-les paramètres d'organisation, le transfert de projet et l'ajout de propriétaires.
+**Rien à faire ici** : le collage des 6 modèles est pris en charge, mais il doit attendre la mise en
+production de la branche en cours. Les nouveaux liens (format `token_hash`) sont lus par une route
+qui n'existe pas encore en ligne : les coller avant le déploiement rendrait les confirmations
+d'inscription inopérantes.
 
 ---
 

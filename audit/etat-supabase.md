@@ -8,11 +8,14 @@
 | Élément | Valeur | Statut |
 |---|---|---|
 | Organisation | `lealaref6@gmail.com` — **plan Free**, 2 membres (Owner + compte de développement en **Developer**) | ⚠️ |
-| Droits du compte de développement | **Developer** = lecture seule sur la configuration Auth : l'édition des templates et des Redirect URLs est refusée (« You need additional permissions »). Le rôle **Administrator** est nécessaire pour intervenir | ⚠️ |
+| Droits du compte de développement | **Administrator** depuis le 2026-08-04 (auparavant *Developer*, lecture seule : « You need additional permissions »). L'édition des Redirect URLs et des templates est donc possible | OK |
 | Projet | `lealaref6@gmail.com's Project` (ref `ixalcjbunskraviicnum`), instance **Nano**, `eu-west-1` | OK |
 | Site URL (Auth) | `https://www.bibble-ai.com` | OK |
-| Redirect URLs | `https://bibble-ai-kappa.vercel.app/**`, `https://www.bibble-ai.com/**`, `http://localhost:3000/**` | OK |
+| Redirect URLs | `https://bibble-ai-kappa.vercel.app/**`, `https://www.bibble-ai.com/**`, `http://localhost:3000/**`, plus `…/api/auth/callback` et `…/auth/update-password` ajoutées le 2026-08-04 | OK |
 | Provider Email | Activé (seul provider actif) | OK |
+| Secure email change | **Activé** — un changement d'adresse doit être confirmé depuis l'ancienne **et** la nouvelle boîte (d'où les deux liens du modèle correspondant) | OK |
+| Longueur minimale des mots de passe | **6** côté Supabase, alors que les formulaires en exigent 8 | ⚠️ |
+| Email OTP expiration / longueur | 3600 s · code à **8 chiffres** | OK |
 | Inscriptions | Autorisées | OK |
 | Confirm email | **Activé** (confirmation obligatoire avant connexion) | OK |
 | SMTP personnalisé | **Activé** → `smtp.resend.com:465`, user `resend`, mot de passe enregistré | OK |

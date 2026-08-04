@@ -14,9 +14,10 @@ configurations de production.
 
 Dashboard : `https://supabase.com/dashboard/project/ixalcjbunskraviicnum/auth/url-configuration`
 
-Les trois entrées existantes (`https://www.bibble-ai.com/**`,
-`https://bibble-ai-kappa.vercel.app/**`, `http://localhost:3000/**`) couvrent déjà tout grâce au
-joker `/**`. Pour documenter l'intention, ajouter en plus :
+✅ **Fait le 2026-08-04.** Les trois entrées existantes (`https://www.bibble-ai.com/**`,
+`https://bibble-ai-kappa.vercel.app/**`, `http://localhost:3000/**`) couvraient déjà tout grâce au
+joker `/**` ; les deux entrées explicites ci-dessous ont été ajoutées pour documenter l'intention.
+Total : 5 URLs.
 
 ```
 https://www.bibble-ai.com/api/auth/callback
@@ -37,7 +38,8 @@ https://www.bibble-ai.com/auth/update-password
 
 ## 2. Supabase — durée de validité des liens
 
-Réglage **Email OTP Expiration** (Authentication → Providers → Email) : **3600 secondes (1 heure)**.
+✅ Réglage **Email OTP Expiration** (Authentication → Providers → Email) : **3600 secondes (1 heure)**
+— vérifié le 2026-08-04, rien à changer.
 
 C'est la durée annoncée dans les textes des [modèles d'e-mails](./email-templates/README.md). Une
 autre valeur imposerait de corriger cette phrase dans les modèles, sinon le message affiché sera faux.

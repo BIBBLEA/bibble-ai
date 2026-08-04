@@ -118,9 +118,9 @@ password » — visibles dans les logs Resend).
 
 - [ ] **A6.1** Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production) = `https://www.bibble-ai.com` —
       c'est cette valeur qui construit les `redirectTo`
-- [ ] **A6.2** Ajouter `https://www.bibble-ai.com/auth/update-password` et
-      `/api/auth/callback` aux Redirect URLs Supabase (le wildcard `/**` les couvre déjà, mais une
-      entrée explicite documente l'intention)
+- [x] **A6.2** ~~Ajouter `https://www.bibble-ai.com/auth/update-password` et `/api/auth/callback` aux
+      Redirect URLs Supabase~~ — fait le 2026-08-04 : les deux entrées sont enregistrées (5 URLs au
+      total). Le wildcard `/**` les couvrait déjà, l'ajout documente l'intention.
 - [ ] **A6.3** Domaine canonique : `www.bibble-ai.com`. La redirection depuis l'apex est déjà en
       place (308, vérifiée le 2026-08-04). Reste à uniformiser le webhook Stripe, qui vise encore
       `bibble-ai-kappa.vercel.app` en test — le webhook live devra pointer sur le domaine de prod.
