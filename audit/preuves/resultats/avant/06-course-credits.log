@@ -1,0 +1,18 @@
+
+==============================================================================
+06 — Course aux crédits : 5 générations simultanées avec 1 seul crédit
+==============================================================================
+[2026-08-04 18:30:20Z] Compte A (a7e35360-6c91-4b2c-b283-d193eef9c57f) : solde fixé à 1 crédit, historique vidéo vidé
+[2026-08-04 18:30:20Z] Aucune fonction consume_credit en base : la séquence actuelle de la route est reproduite.
+[2026-08-04 18:30:20Z] 
+[2026-08-04 18:30:20Z] Lancement de 5 requêtes simultanées…
+[2026-08-04 18:30:21Z]   requête 1 : ✔ vidéo lancée — solde lu : 1
+[2026-08-04 18:30:21Z]   requête 2 : ✔ vidéo lancée — solde lu : 1
+[2026-08-04 18:30:21Z]   requête 3 : ✔ vidéo lancée — solde lu : 1
+[2026-08-04 18:30:21Z]   requête 4 : ✔ vidéo lancée — solde lu : 1
+[2026-08-04 18:30:21Z]   requête 5 : ✔ vidéo lancée — solde lu : 1
+[2026-08-04 18:30:21Z] 
+[2026-08-04 18:30:21Z] Vidéos lancées : 5 — attendu avec 1 crédit : 1
+[2026-08-04 18:30:21Z] Solde final : 0 crédits
+
+❌ EXPLOITÉ — 5 vidéos ont été lancées avec un seul crédit — le solde n'est débité qu'une fois (0 restant), les 4 autres sont offertes

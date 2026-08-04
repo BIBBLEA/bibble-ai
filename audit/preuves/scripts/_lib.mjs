@@ -135,16 +135,32 @@ export async function seConnecter(compte) {
   return { user: data.user, jeton: data.session.access_token };
 }
 
-/** Vérifie que l'application Next tourne ; sinon verdict INDÉTERMINÉ. */
+/**
+ * Vérifie qu'une application répond sur APP_URL *et* qu'il s'agit bien de
+ * celle-ci : un autre projet occupant le port renverrait 404 sur toutes les
+ * routes, ce qui produirait des verdicts faux.
+ */
 export async function exigerAppEnLigne() {
   const base = urlApp();
   try {
     await fetch(base, { method: "GET", signal: AbortSignal.timeout(5000) });
   } catch {
+    indetermine(`application injoignable sur ${base} — la démarrer avec « npm run dev »`);
+  }
+
+  // Route connue du projet : une réponse 404 signale une autre application.
+  const sonde = await fetch(`${base}/api/webhooks/stripe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (sonde.status === 404) {
     indetermine(
-      `application injoignable sur ${base} — la démarrer avec « npm run dev »`
+      `l'application qui répond sur ${base} n'est pas bibble-ai : /api/webhooks/stripe est` +
+        " absente (404). Vérifier qu'aucun autre projet n'occupe ce port."
     );
   }
+
   return base;
 }
 

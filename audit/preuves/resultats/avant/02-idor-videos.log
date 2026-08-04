@@ -1,0 +1,18 @@
+
+==============================================================================
+02 — IDOR : accès aux vidéos d'un autre utilisateur
+==============================================================================
+[2026-08-04 18:30:17Z] Connecté en tant que preuve-a@bibble-preuves.test (a7e35360-6c91-4b2c-b283-d193eef9c57f)
+[2026-08-04 18:30:17Z] Application testée : http://localhost:3100
+[2026-08-04 18:30:17Z] 
+[2026-08-04 18:30:17Z] --- /api/video-download ---
+[2026-08-04 18:30:17Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer l'URL de téléchargement."}
+[2026-08-04 18:30:17Z]   vidéo de B (illégitime) → HTTP 502 {"error":"Impossible de récupérer l'URL de téléchargement."}
+[2026-08-04 18:30:17Z]   ⇒ réponses identiques : la route ne distingue pas le propriétaire d'un tiers
+[2026-08-04 18:30:17Z] 
+[2026-08-04 18:30:17Z] --- /api/video-status ---
+[2026-08-04 18:30:18Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer le statut de la vidéo."}
+[2026-08-04 18:30:18Z]   vidéo de B (illégitime) → HTTP 502 {"error":"Impossible de récupérer le statut de la vidéo."}
+[2026-08-04 18:30:18Z]   ⇒ réponses identiques : la route ne distingue pas le propriétaire d'un tiers
+
+❌ EXPLOITÉ — 2 route(s) sur 2 traitent la vidéo d'un autre utilisateur sans contrôle de propriété : /api/video-download (HTTP 502), /api/video-status (HTTP 502)

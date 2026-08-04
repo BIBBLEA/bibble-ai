@@ -3,6 +3,7 @@ import {
   VIDEO_DE_A,
   VIDEO_DE_B,
   exigerAppEnLigne,
+  indetermine,
   log,
   seConnecter,
   titre,
@@ -48,6 +49,7 @@ async function appeler(chemin, videoId) {
 }
 
 const resultats = [];
+const absentes = [];
 
 for (const chemin of ["/api/video-download", "/api/video-status"]) {
   log("");
@@ -58,6 +60,13 @@ for (const chemin of ["/api/video-download", "/api/video-status"]) {
 
   const autrui = await appeler(chemin, VIDEO_DE_B);
   log(`  vidéo de B (illégitime) → HTTP ${autrui.statut} ${JSON.stringify(autrui.corps)}`);
+
+  // Une route absente (404) ne prouve rien : ne pas conclure dessus.
+  if (sienne.statut === 404 || autrui.statut === 404) {
+    log("  ⇒ route absente (404) — aucune conclusion possible");
+    absentes.push(chemin);
+    continue;
+  }
 
   const refuse = autrui.statut === 403;
   const identiques = sienne.statut === autrui.statut;
@@ -71,6 +80,10 @@ for (const chemin of ["/api/video-download", "/api/video-status"]) {
   }
 
   resultats.push({ chemin, refuse, identiques, statutAutrui: autrui.statut });
+}
+
+if (absentes.length) {
+  indetermine(`route(s) absente(s) sur ${base} : ${absentes.join(", ")}`);
 }
 
 const routesVulnerables = resultats.filter((r) => !r.refuse);
