@@ -38,7 +38,9 @@
 
             <p style="margin:0 0 24px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:26px; color:#d4d4d8;">
               Une demande de changement d'adresse a été effectuée sur votre compte Bibble&nbsp;AI.
-              Confirmez-la en cliquant sur le bouton ci-dessous.
+              Pour votre sécurité, elle doit être confirmée <strong style="color:#fafafa;">depuis les deux
+              adresses</strong>&nbsp;: ce message est envoyé à l'ancienne comme à la nouvelle. Cliquez sur le
+              bouton correspondant à la boîte dans laquelle vous lisez ce message.
             </p>
 
             <!-- Recapitulatif ancienne / nouvelle adresse -->
@@ -59,8 +61,19 @@
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 32px auto;">
               <tr>
                 <td bgcolor="#7c3aed" style="background-color:#7c3aed; border-radius:10px;">
-                  <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">
-                    Confirmer le changement
+                  <a href="{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=email_change" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">
+                    Je lis ce message sur {{ .Email }}
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Bouton nouvelle adresse : second jeton exige par Secure email change -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 32px auto;">
+              <tr>
+                <td bgcolor="#111113" style="background-color:#111113; border:1px solid #7c3aed; border-radius:10px;">
+                  <a href="{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHashNew }}&type=email_change" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#a78bfa; text-decoration:none; border-radius:10px;">
+                    Je lis ce message sur {{ .NewEmail }}
                   </a>
                 </td>
               </tr>
@@ -68,10 +81,16 @@
 
             <!-- Lien de secours -->
             <p style="margin:0 0 8px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a1a1aa;">
-              Le bouton ne fonctionne pas&nbsp;? Copiez ce lien dans votre navigateur&nbsp;:
+              Les boutons ne fonctionnent pas&nbsp;? Copiez dans votre navigateur le lien correspondant à
+              l'adresse sur laquelle vous lisez ce message&nbsp;:
+            </p>
+            <p style="margin:0 0 12px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a78bfa; word-break:break-all;">
+              Depuis {{ .Email }}&nbsp;:<br />
+              {{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=email_change
             </p>
             <p style="margin:0 0 28px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a78bfa; word-break:break-all;">
-              {{ .ConfirmationURL }}
+              Depuis {{ .NewEmail }}&nbsp;:<br />
+              {{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHashNew }}&type=email_change
             </p>
 
             <!-- Separateur -->

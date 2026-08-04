@@ -20,19 +20,18 @@ joker `/**`. Pour documenter l'intention, ajouter en plus :
 
 ```
 https://www.bibble-ai.com/api/auth/callback
-https://www.bibble-ai.com/api/auth/confirm
 https://www.bibble-ai.com/auth/update-password
 ```
 
 | URL | Déclenchée par | Ce qu'elle fait |
 |---|---|---|
-| `/api/auth/callback` | Lien « Confirmer mon adresse » de l'e-mail d'inscription | Échange le code contre une session, puis redirige vers le tableau de bord |
-| `/api/auth/confirm` | *(à venir)* liens e-mail au format `token_hash` | Version robuste du callback : fonctionne même si l'e-mail est ouvert sur un autre appareil que celui de l'inscription |
-| `/auth/update-password` | Lien « Réinitialiser mon mot de passe » | Formulaire de choix du nouveau mot de passe |
+| `/api/auth/callback` | Tous les liens reçus par e-mail (inscription, réinitialisation, changement d'adresse, lien de connexion, invitation) | Vérifie le lien, ouvre la session, puis redirige selon le type : tableau de bord, choix du nouveau mot de passe ou page « Mon compte » |
+| `/auth/update-password` | Redirection interne après un lien de réinitialisation | Formulaire de choix du nouveau mot de passe |
 
-> `/api/auth/confirm` et `/auth/update-password` sont **en cours de développement**. Les déclarer dès
-> maintenant est sans risque : une Redirect URL déclarée mais inexistante ne casse rien, alors qu'une
-> URL manquante fait échouer le lien reçu par e-mail.
+> Le callback accepte deux formats de lien : l'ancien (`?code=…`, conservé pour les e-mails déjà
+> envoyés) et le nouveau (`?token_hash=…&type=…`), utilisé par les modèles d'e-mails. Ce second
+> format fonctionne même si l'e-mail est ouvert sur un autre appareil que celui de l'inscription —
+> c'est la raison de la bascule.
 
 ---
 

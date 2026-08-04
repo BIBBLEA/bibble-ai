@@ -18,76 +18,80 @@ L'infrastructure d'envoi est saine (SMTP Resend actif, domaine `bibble-ai.com` v
 délivrés). Le problème est **applicatif** : sur 6 parcours e-mail attendus, **1 seul est implémenté**
 et il comporte des défauts.
 
-| Parcours | État actuel |
-|---|---|
-| Inscription + confirmation | ⚠️ Implémenté mais fragile (erreurs silencieuses, PKCE cross-navigateur) |
-| Mot de passe oublié | 🔴 Absent — code reverté (`baa348d`, `02649d9`, `a7e6962`) |
-| Renvoi de l'e-mail de confirmation | 🔴 Absent — utilisateur non confirmé définitivement bloqué |
-| Changement de mot de passe (connecté) | 🔴 Absent |
-| Changement d'adresse e-mail | 🔴 Absent |
-| Page « Mon compte » | 🔴 Absente — aucune page profil dans l'app |
+| Parcours | État au moment de l'audit | État après implémentation |
+|---|---|---|
+| Inscription + confirmation | ⚠️ Implémenté mais fragile (erreurs silencieuses, PKCE cross-navigateur) | ✅ Motifs d'erreur explicites, liens `token_hash` valides depuis n'importe quel appareil |
+| Mot de passe oublié | 🔴 Absent — code reverté (`baa348d`, `02649d9`, `a7e6962`) | ✅ `/auth/forgot-password` + `/auth/update-password` |
+| Renvoi de l'e-mail de confirmation | 🔴 Absent — utilisateur non confirmé définitivement bloqué | ✅ Bouton sur `/login`, verrou de 60 s |
+| Changement de mot de passe (connecté) | 🔴 Absent | ✅ Section « Mon compte », mot de passe actuel exigé |
+| Changement d'adresse e-mail | 🔴 Absent | ✅ Section « Mon compte » + double confirmation |
+| Page « Mon compte » | 🔴 Absente — aucune page profil dans l'app | ✅ `/dashboard/account`, avec suppression de compte |
+
+Reste à faire côté configuration : coller les modèles d'e-mails dans Supabase (A5.1 à A5.4, A5.6),
+vérifier les variables Vercel (A6) et dérouler la recette (A7).
 
 ## A1 — Corriger le parcours d'inscription existant
 
-- [ ] **A1.1** `src/app/login/page.tsx` : lire `searchParams.get("error")` et afficher un message
-      lisible. Aujourd'hui le callback redirige vers `/login?error=auth_callback_error` (voir
-      `src/app/api/auth/callback/route.ts:37-39`) mais la page **ne lit que `redirect`** — l'utilisateur
-      voit une page de connexion muette et ne comprend pas que sa confirmation a échoué.
-- [ ] **A1.2** `src/app/api/auth/callback/route.ts` : distinguer les causes d'échec (code absent, code
-      expiré, `code_verifier` manquant) et passer un motif explicite en query string plutôt qu'un
-      `auth_callback_error` générique.
-- [ ] **A1.3** Traiter le **cas PKCE cross-navigateur** : les liens de confirmation sont en PKCE
-      (tokens `pkce_…` visibles dans les logs Resend). Si l'utilisateur s'inscrit sur mobile et ouvre
-      le mail sur ordinateur, le `code_verifier` est absent → échec systématique. Deux options :
-      (a) basculer les templates sur le flux `token_hash` + `verifyOtp` côté callback (robuste,
-      recommandé), ou (b) afficher un écran de récupération invitant à renvoyer le lien.
-- [ ] **A1.4** Changer le placeholder du champ e-mail (`login/page.tsx:146`) : `vous@exemple.com`
-      **est à l'origine des erreurs 422 Resend** — il a été recopié tel quel lors des tests, or Resend
-      refuse les domaines `example.com`. Utiliser `prenom.nom@email.com`.
-- [ ] **A1.5** Ajouter un champ « Confirmer le mot de passe » à l'inscription et remonter
-      `minLength` de 6 à 8 caractères (`login/page.tsx:163`).
-- [ ] **A1.6** Message post-inscription plus explicite : rappeler l'adresse saisie, indiquer de
-      vérifier les spams, proposer le renvoi (voir A2).
+- [x] **A1.1** ~~`src/app/login/page.tsx` : lire `searchParams.get("error")` et afficher un message
+      lisible~~ — fait : quatre motifs traduits en messages (`missing_code`, `expired_link`,
+      `pkce_missing`, `verification_failed`), plus l'ancien `auth_callback_error` conservé pour les
+      liens déjà envoyés, et un bandeau vert sur `?message=email_confirmed`
+- [x] **A1.2** ~~`src/app/api/auth/callback/route.ts` : distinguer les causes d'échec~~ — fait :
+      fonction `classifyAuthError`, le cas `code_verifier` étant testé en premier car son message
+      Supabase contient aussi « invalid »
+- [x] **A1.3** ~~Traiter le **cas PKCE cross-navigateur**~~ — option (a) retenue : le callback accepte
+      désormais `?token_hash=…&type=…` (`verifyOtp`, liste blanche typée des cinq types e-mail) **et**
+      conserve `?code=…` pour les liens partis avant la bascule. Le paramètre `next` est validé contre
+      les redirections ouvertes. Templates adaptés en A5.5.
+- [x] **A1.4** ~~Changer le placeholder du champ e-mail~~ — fait : `prenom.nom@email.com`
+- [x] **A1.5** ~~Ajouter un champ « Confirmer le mot de passe » et remonter `minLength` à 8~~ — fait,
+      avec validation d'égalité avant appel et texte d'aide
+- [x] **A1.6** ~~Message post-inscription plus explicite~~ — fait : adresse saisie rappelée, renvoi
+      aux spams, bloc de renvoi affiché dans la foulée
 
 ## A2 — Renvoi de l'e-mail de confirmation
 
-- [ ] **A2.1** Ajouter un bouton « Renvoyer l'e-mail de confirmation » sur `/login` (visible après une
-      inscription ou après une erreur « Email not confirmed »)
-- [ ] **A2.2** Implémenter `supabase.auth.resend({ type: 'signup', email })` avec le même
-      `emailRedirectTo` que l'inscription
-- [ ] **A2.3** Anti-abus : désactiver le bouton pendant 60 s (l'intervalle minimum par utilisateur
-      configuré côté Supabase est de 60 s — sans garde-fou, l'utilisateur reçoit une erreur brute)
+- [x] **A2.1** ~~Bouton « Renvoyer l'e-mail de confirmation » sur `/login`~~ — fait : visible après une
+      inscription, après une erreur de confirmation venant du callback, et après un échec de connexion
+      « Email not confirmed »
+- [x] **A2.2** ~~`supabase.auth.resend({ type: 'signup', email })`~~ — fait, avec le `emailRedirectTo`
+      produit par le même helper que l'inscription
+- [x] **A2.3** ~~Anti-abus : désactiver le bouton pendant 60 s~~ — fait : décompte visible, timer
+      nettoyé au démontage, réponse neutre qui ne révèle pas si le compte existe
 
 ## A3 — Mot de passe oublié (flux complet à recréer)
 
-- [ ] **A3.1** Lien « Mot de passe oublié ? » sur `/login`, sous le champ mot de passe
-- [ ] **A3.2** Page `/auth/forgot-password` : saisie de l'e-mail →
-      `supabase.auth.resetPasswordForEmail(email, { redirectTo: <APP_URL>/auth/update-password })`.
-      L'e-mail part par le SMTP Resend déjà configuré — **pas besoin de la clé API Resend côté code**,
-      contrairement à l'ancienne implémentation revertée qui appelait l'API Resend directement.
-- [ ] **A3.3** Réponse neutre quel que soit le résultat (« Si un compte existe pour cette adresse,
-      un e-mail a été envoyé ») afin de ne pas révéler quels e-mails sont inscrits
-- [ ] **A3.4** Page `/auth/update-password` : réception du lien, saisie + confirmation du nouveau mot
-      de passe, `supabase.auth.updateUser({ password })`, puis redirection vers `/dashboard`
-- [ ] **A3.5** Gérer le lien expiré ou déjà utilisé : message clair + lien pour relancer une demande
+- [x] **A3.1** ~~Lien « Mot de passe oublié ? » sur `/login`~~ — fait, sous le champ mot de passe, en
+      mode connexion uniquement
+- [x] **A3.2** ~~Page `/auth/forgot-password`~~ — fait : `resetPasswordForEmail` avec
+      `redirectTo` vers `/api/auth/callback?next=/auth/update-password`. L'e-mail part par le SMTP
+      Resend déjà configuré, aucune clé API Resend côté code.
+- [x] **A3.3** ~~Réponse neutre quel que soit le résultat~~ — fait : message identique en cas de succès
+      et d'adresse inconnue ; seule la limite de fréquence (429) est signalée, elle ne révèle rien.
+      Bouton verrouillé 60 s avec décompte.
+- [x] **A3.4** ~~Page `/auth/update-password`~~ — fait : vérification de session au montage, nouveau
+      mot de passe + confirmation (8 caractères minimum), puis redirection vers `/dashboard`
+- [x] **A3.5** ~~Gérer le lien expiré ou déjà utilisé~~ — fait : écran dédié avec bouton « Demander un
+      nouveau lien ». Le callback renvoie les échecs du parcours de récupération vers
+      `/auth/update-password?error=…` plutôt que vers `/login`, dont les messages parlent de
+      confirmation d'inscription.
 
-## A4 — Espace « Mon compte » (pages à créer)
+## A4 — Espace « Mon compte »
 
-Aucune page de profil n'existe aujourd'hui (l'app se limite à dashboard, historique, facturation,
-portail admin et pages légales).
-
-- [ ] **A4.1** Créer `/dashboard/account` + entrée « Mon compte » dans
-      `src/components/dashboard/sidebar.tsx`
-- [ ] **A4.2** Section profil : affichage/modification du nom, prénom, téléphone
-      (`profiles.full_name`, métadonnées utilisateur)
-- [ ] **A4.3** Section mot de passe : changement pour un utilisateur connecté
-      (`supabase.auth.updateUser({ password })`), avec re-saisie du mot de passe actuel
-- [ ] **A4.4** Section e-mail : changement d'adresse (`supabase.auth.updateUser({ email })`) — déclenche
-      un e-mail de confirmation sur **les deux** adresses ; prévoir l'écran d'attente correspondant
-- [ ] **A4.5** Vérifier que le callback gère `type=email_change` (aujourd'hui il ne traite que
-      l'échange de code générique)
-- [ ] **A4.6** Suppression de compte (RGPD — le site publie une politique de confidentialité) : route
-      serveur avec `service_role` supprimant l'utilisateur et ses données
+- [x] **A4.1** ~~Créer `/dashboard/account` + entrée « Mon compte » dans la sidebar~~ — fait, entrée
+      placée avant « Mon abonnement »
+- [x] **A4.2** ~~Section profil~~ — fait : prénom, nom et téléphone écrits dans les métadonnées
+      utilisateur **et** `profiles.full_name`, avec repli sur `full_name` pour les comptes créés avant
+      l'ajout de ces champs (la table `profiles` n'a pas de colonnes `first_name`/`last_name`/`phone`)
+- [x] **A4.3** ~~Section mot de passe~~ — fait : le mot de passe actuel est vérifié par
+      `signInWithPassword` avant tout appel à `updateUser({ password })`
+- [x] **A4.4** ~~Section e-mail~~ — fait, avec l'écran d'attente expliquant les deux confirmations
+- [x] **A4.5** ~~Vérifier que le callback gère `type=email_change`~~ — fait : redirection vers
+      `/dashboard/account?message=email_changed`, bandeau de confirmation côté page
+- [x] **A4.6** ~~Suppression de compte (RGPD)~~ — fait : `POST /api/account/delete`, confirmation par
+      saisie du mot `SUPPRIMER`, suppression via `service_role` en s'appuyant sur les
+      `ON DELETE CASCADE` déjà en place. La suppression est refusée (409) tant qu'un abonnement Stripe
+      est actif : la résilier à la place de l'utilisateur laisserait un abonnement facturé sans compte.
 
 ## A5 — Templates d'e-mails Supabase
 
@@ -99,8 +103,14 @@ password » — visibles dans les logs Resend).
 - [ ] **A5.3** Traduire et brander **Change email address**
 - [ ] **A5.4** Traduire **Magic link** et **Reauthentication** (non utilisés aujourd'hui, mais évite
       un e-mail anglais surprise si activés plus tard)
-- [ ] **A5.5** Si A1.3 option (a) est retenue : adapter les templates au format `token_hash`
-      (`{{ .TokenHash }}`) au lieu de `{{ .ConfirmationURL }}`
+- [x] **A5.5** ~~Si A1.3 option (a) est retenue : adapter les templates au format `token_hash`
+      (`{{ .TokenHash }}`) au lieu de `{{ .ConfirmationURL }}`~~ — fait le 2026-08-04 : les 5 modèles
+      à lien pointent sur `{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=…`
+      (`05-code-de-confirmation.html` conserve son code `{{ .Token }}`), README mis à jour avec la
+      consigne de ne coller qu'après la mise en production du callback. Le modèle de changement
+      d'adresse porte **deux** liens (`{{ .TokenHash }}` et `{{ .TokenHashNew }}`) : *Secure email
+      change* étant actif, le même message part vers l'ancienne et la nouvelle adresse et le
+      changement n'aboutit qu'une fois les deux ouverts.
 - [ ] **A5.6** Activer et traduire les notifications de sécurité « Password changed » et
       « Email address changed » (actuellement désactivées)
 

@@ -49,7 +49,7 @@
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 32px auto;">
               <tr>
                 <td bgcolor="#7c3aed" style="background-color:#7c3aed; border-radius:10px;">
-                  <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">
+                  <a href="{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=recovery" target="_blank" style="display:inline-block; padding:15px 34px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:16px; line-height:20px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">
                     Choisir un nouveau mot de passe
                   </a>
                 </td>
@@ -61,7 +61,7 @@
               Le bouton ne fonctionne pas&nbsp;? Copiez ce lien dans votre navigateur&nbsp;:
             </p>
             <p style="margin:0 0 28px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#a78bfa; word-break:break-all;">
-              {{ .ConfirmationURL }}
+              {{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=recovery
             </p>
 
             <!-- Separateur -->
