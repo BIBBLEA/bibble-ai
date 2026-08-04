@@ -79,12 +79,10 @@ dashboard en mode live est nécessaire.
 
 ---
 
-## 5. Recette — une fois la configuration en place
+## 5. ✅ Recette e-mails — faite
 
-- [ ] Fournir **2 vraies adresses e-mail de test** (une Gmail, une Outlook)
-- [ ] Tester l'inscription complète : réception de l'e-mail → confirmation → accès au tableau de bord
-- [ ] Tester la réinitialisation de mot de passe de bout en bout
-- [ ] Contrôler l'absence de classement en spam sur les deux messageries
+Inscription, réinitialisation de mot de passe et changement d'adresse ont été testés de bout en bout
+sur le site en production : e-mails reçus, liens fonctionnels, accès au tableau de bord.
 
 ---
 

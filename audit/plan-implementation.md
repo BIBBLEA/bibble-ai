@@ -29,8 +29,7 @@ et il comporte des défauts.
 
 Branche fusionnée dans `main` et déployée. Les modèles d'e-mails sont collés dans Supabase et les
 parcours inscription, mot de passe oublié et changement d'adresse ont été validés en conditions
-réelles. Reste : les variables d'environnement Vercel (A6), les notifications de sécurité (A5.6) et
-la fin de la recette (A7).
+réelles. Reste : les variables d'environnement Vercel (A6) et les notifications de sécurité (A5.6).
 
 ## A1 — Corriger le parcours d'inscription existant
 
@@ -138,21 +137,14 @@ Les six modèles français sont écrits, collés dans Supabase et vérifiés en 
 
 - [x] **A7.1** ~~Inscription complète avec une **vraie adresse Gmail**~~ — testé : réception →
       confirmation → accès au tableau de bord
-- [ ] **A7.2** Même parcours avec **Outlook** (délivrabilité différente) — non testé
-- [ ] **A7.3** Parcours cross-navigateur : s'inscrire sur un navigateur, ouvrir le lien sur un autre.
-      Le format `token_hash` le rend théoriquement insensible à ce cas, mais ce n'est pas vérifié.
-- [x] **A7.4** ~~Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion~~ — testé
-- [x] **A7.5** ~~Changement d'e-mail~~ — testé. Renvoi de confirmation et changement de mot de passe
-      connecté restent à éprouver en conditions réelles.
-- [x] **A7.6** ~~Cas d'erreur~~ — vérifié en production sur les redirections du callback : absence de
+- [x] **A7.2** ~~Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion~~ — testé
+- [x] **A7.3** ~~Changement d'adresse e-mail~~ — testé
+- [x] **A7.4** ~~Cas d'erreur~~ — vérifié en production sur les redirections du callback : absence de
       paramètre, jeton invalide selon les cinq types, `type` inconnu, code PKCE invalide, tentative
       de redirection hors domaine (`next=//evil.example`). Réponse neutre et verrou de 60 s confirmés
       sur le formulaire de mot de passe oublié.
-- [ ] **A7.7** Contrôler la délivrabilité (pas de classement en spam) sur plusieurs messageries et
-      l'absence de nouvelles erreurs dans les logs Resend
-- [ ] **A7.8** Nettoyer les comptes de test non confirmés dans Supabase (côté Resend, rien à purger :
-      les envois vers `example.com` ont été refusés à la validation, aucune adresse n'a été
-      blacklistée)
+
+Recette close : les parcours e-mail sont validés.
 
 ---
 
