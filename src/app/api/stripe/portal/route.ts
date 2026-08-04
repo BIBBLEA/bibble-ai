@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { Database } from "@/types/database";
 
 // ============================================
@@ -10,10 +10,6 @@ import { Database } from "@/types/database";
 // Permet à l'utilisateur de gérer son abonnement
 // (changer de plan, annuler, mettre à jour la carte)
 // ============================================
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-});
 
 export async function POST(request: NextRequest) {
   try {

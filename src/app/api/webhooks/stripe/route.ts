@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { Database } from "@/types/database";
 
 // ============================================
@@ -12,10 +13,6 @@ import { Database } from "@/types/database";
 // - customer.subscription.updated → Changement de plan
 // - customer.subscription.deleted → Annulation
 // ============================================
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-});
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
