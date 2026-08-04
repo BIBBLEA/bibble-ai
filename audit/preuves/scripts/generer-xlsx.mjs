@@ -124,6 +124,23 @@ const FAILLES = [
     preuveApres: "✔ 2026-08-04 19:01Z — code 0 (resultats/apres/06-course-credits.log)",
     statut: "Corrigé",
   },
+  {
+    faille: "Contournement du contrôle de propriété des vidéos",
+    abus:
+      "Se déclarer propriétaire de la vidéo d'un autre client en insérant soi-même une ligne dans l'historique, ce que la policy d'insertion autorisait. Le contrôle ajouté pour la faille n° 2 est alors satisfait.",
+    consequence:
+      "Le correctif de la faille n° 2 était neutralisable : les contenus des autres clients restaient accessibles.",
+    gravite: "Élevée",
+    emplacement: "supabase/migrations/001_initial_schema.sql:195-197",
+    reference: "B2.5",
+    script: "07-rls-insertion-videos.mjs",
+    avant: "❌ Insertion acceptée, la vidéo d'autrui redevient accessible — code 1",
+    preuveAvant: "✔ 2026-08-04 20:58Z — code 1 (resultats/avant/07-rls-insertion-videos.log)",
+    correctif: "Fait — 007_revue_rls.sql : la policy d'insertion est retirée. Aucun code ne s'en servait, l'application insère avec la clé serveur. Revue des six tables consignée dans la migration.",
+    apres: "✅ Insertion refusée, le refus 403 tient — code 0",
+    preuveApres: "✔ 2026-08-04 21:00Z — code 0 (resultats/apres/07-rls-insertion-videos.log)",
+    statut: "Corrigé",
+  },
 ];
 
 const COLONNES = [

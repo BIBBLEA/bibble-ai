@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+// Le droit d'administration est porté par la colonne `profiles.is_admin`
+// (migration 006), pas par une adresse e-mail. ADMIN_EMAIL n'est plus lu :
+// conserver une seconde voie d'accès en secours reviendrait à garder ouverte
+// celle que le correctif ferme — l'adresse circule, elle est portable d'un
+// compte à l'autre par le parcours de changement d'e-mail, et une variable
+// d'environnement vaut pour tous les déploiements qui la partagent. La reprise
+// en cas de perte du dernier administrateur passe par le SQL, donc par un accès
+// au projet Supabase : c'est le bon niveau d'exigence.
 
 function getSupabaseAdmin() {
   return createClient<Database>(
@@ -24,9 +31,23 @@ async function verifyAdmin(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || user.email !== ADMIN_EMAIL) {
+  if (error || !user) {
     return null;
   }
+
+  // Lecture du flag avec la clé service_role : le client n'a aucune prise
+  // dessus, et le résultat ne dépend pas des policies de la table.
+  const { data: profil, error: erreurProfil } = await getSupabaseAdmin()
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  // Échec fermé : profil absent, lecture en erreur ou flag non positionné.
+  if (erreurProfil || !profil?.is_admin) {
+    return null;
+  }
+
   return user;
 }
 

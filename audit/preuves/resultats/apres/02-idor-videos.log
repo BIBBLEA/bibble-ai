@@ -2,17 +2,17 @@
 ==============================================================================
 02 — IDOR : accès aux vidéos d'un autre utilisateur
 ==============================================================================
-[2026-08-04 19:00:58Z] Connecté en tant que preuve-a@bibble-preuves.test (1c50596b-96e8-4538-9bb4-1cd376a2be36)
-[2026-08-04 19:00:58Z] Application testée : http://localhost:3100
-[2026-08-04 19:00:58Z] 
-[2026-08-04 19:00:58Z] --- /api/video-download ---
-[2026-08-04 19:00:59Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer l'URL de téléchargement."}
-[2026-08-04 19:00:59Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
-[2026-08-04 19:00:59Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
-[2026-08-04 19:00:59Z] 
-[2026-08-04 19:00:59Z] --- /api/video-status ---
-[2026-08-04 19:00:59Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer le statut de la vidéo."}
-[2026-08-04 19:00:59Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
-[2026-08-04 19:00:59Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
+[2026-08-04 20:59:27Z] Connecté en tant que preuve-a@bibble-preuves.test (56d64ff5-57d1-427c-b896-c4444e435635)
+[2026-08-04 20:59:27Z] Application testée : http://localhost:3100
+[2026-08-04 20:59:27Z] 
+[2026-08-04 20:59:27Z] --- /api/video-download ---
+[2026-08-04 20:59:28Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer l'URL de téléchargement."}
+[2026-08-04 20:59:28Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
+[2026-08-04 20:59:28Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
+[2026-08-04 20:59:28Z] 
+[2026-08-04 20:59:28Z] --- /api/video-status ---
+[2026-08-04 20:59:28Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer le statut de la vidéo."}
+[2026-08-04 20:59:28Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
+[2026-08-04 20:59:28Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
 
 ✅ BLOQUÉ — les deux routes refusent (403) l'accès à la vidéo d'un autre utilisateur

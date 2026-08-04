@@ -14,6 +14,7 @@ export type Database = {
           stripe_subscription_id: string | null;
           plan: "starter" | "growth" | "pro" | null;
           credits: number;
+          is_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -26,6 +27,7 @@ export type Database = {
           stripe_subscription_id?: string | null;
           plan?: "starter" | "growth" | "pro" | null;
           credits?: number;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -38,6 +40,7 @@ export type Database = {
           stripe_subscription_id?: string | null;
           plan?: "starter" | "growth" | "pro" | null;
           credits?: number;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };

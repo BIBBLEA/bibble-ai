@@ -1,0 +1,13 @@
+
+==============================================================================
+07 — Contournement du contrôle de propriété par insertion directe
+==============================================================================
+[2026-08-04 20:59:09Z] Compte A : 324c2b34-e856-4807-b7ae-4f2799f85601
+[2026-08-04 20:59:09Z] Demande sur la vidéo de B → HTTP 403
+[2026-08-04 20:59:09Z] 
+[2026-08-04 20:59:09Z] Insertion tentée avec la clé publique du site :
+[2026-08-04 20:59:09Z]   supabase.from("video_generations").insert({ user_id: "<A>", heygen_video_id: "heygen_video_appartenant_a_B" })
+[2026-08-04 20:59:09Z] Réponse : insertion acceptée — A figure désormais comme propriétaire de la vidéo de B
+[2026-08-04 20:59:09Z] Nouvelle demande sur la vidéo de B → HTTP 502
+
+❌ EXPLOITÉ — une simple insertion suffit à se déclarer propriétaire de la vidéo d'un autre : le contrôle ajouté en B2.1 est neutralisé

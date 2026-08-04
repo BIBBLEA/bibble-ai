@@ -172,6 +172,8 @@ Recette close : les parcours e-mail sont validés.
 - [ ] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
       `profiles.credits` avec la somme des `credit_transactions`) — **nécessite un accès en lecture
       au projet hébergé**, non réalisable en local
+      → requêtes prêtes dans `audit/preuves/b0-2-controle-soldes.sql` (lecture seule),
+      à exécuter depuis l'éditeur SQL du projet hébergé.
 
 ## B1 — Crédits atomiques
 
@@ -204,12 +206,14 @@ Recette close : les parcours e-mail sont validés.
       → **fait** le 2026-08-04. Contrôle de propriété avant tout appel au prestataire, refus 403 au message neutre.
 - [x] **B2.2** `/api/video-status` : même contrôle de propriété (`route.ts:111-121`)
       → **fait** le 2026-08-04. Même contrôle, même formulation.
-- [ ] **B2.3** Ajouter `ADMIN_EMAIL` aux variables Vercel — absent aujourd'hui, le portail admin est
+- [x] **B2.3** Ajouter `ADMIN_EMAIL` aux variables Vercel — absent aujourd'hui, le portail admin est
       donc inopérant en production (il échoue fermé). Mieux : remplacer la comparaison d'e-mail par un
       flag `is_admin` en base ou un custom claim JWT.
+      → **fait** le 2026-08-04. `006_flag_admin.sql` — colonne `is_admin`, hors de portée du client. Le contrôle par `ADMIN_EMAIL` est supprimé du code : une seconde voie d'accès rouvrirait ce que le correctif ferme. Vérifié : 403 pour un compte ordinaire, 200 une fois le droit posé, 403 après retrait.
 - [ ] **B2.4** Rate limiting applicatif sur `/api/generate-video` et les routes mutantes
-- [ ] **B2.5** Revue complète des policies RLS sur `profiles`, `video_generations`,
+- [x] **B2.5** Revue complète des policies RLS sur `profiles`, `video_generations`,
       `credit_transactions`, `subscriptions`, `site_settings`
+      → **fait** le 2026-08-04. `007_revue_rls.sql` — revue des six tables. La policy « Users can insert own videos » permettait de se déclarer propriétaire de la vidéo d'autrui et **neutralisait le correctif B2.1** ; elle est retirée, aucun code ne s'en servait. Preuve : `07-rls-insertion-videos.mjs`, ❌ puis ✅.
 
 ## B3 — Webhook Stripe : idempotence et correctifs
 

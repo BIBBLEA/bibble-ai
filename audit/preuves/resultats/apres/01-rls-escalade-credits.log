@@ -2,16 +2,16 @@
 ==============================================================================
 01 — Escalade de crédits via la policy RLS « Users can update own profile »
 ==============================================================================
-[2026-08-04 19:00:58Z] Connecté en tant que preuve-a@bibble-preuves.test (1c50596b-96e8-4538-9bb4-1cd376a2be36)
-[2026-08-04 19:00:58Z] Solde et plan avant l'attaque : 2 crédits, plan « starter »
-[2026-08-04 19:00:58Z] 
-[2026-08-04 19:00:58Z] Requête envoyée avec la clé anon et le jeton de l'utilisateur :
-[2026-08-04 19:00:58Z]   supabase.from("profiles").update({ credits: 9999, plan: "pro" })
-[2026-08-04 19:00:58Z]                            .eq("id", "1c50596b-96e8-4538-9bb4-1cd376a2be36")
-[2026-08-04 19:00:58Z] Réponse : refus de PostgREST — 42501 permission denied for table profiles
-[2026-08-04 19:00:58Z] Solde et plan après l'attaque : 2 crédits, plan « starter »
-[2026-08-04 19:00:58Z] 
-[2026-08-04 19:00:58Z] Non-régression : la modification de full_name reste possible
+[2026-08-04 20:59:26Z] Connecté en tant que preuve-a@bibble-preuves.test (56d64ff5-57d1-427c-b896-c4444e435635)
+[2026-08-04 20:59:26Z] Solde et plan avant l'attaque : 2 crédits, plan « starter »
+[2026-08-04 20:59:26Z] 
+[2026-08-04 20:59:26Z] Requête envoyée avec la clé anon et le jeton de l'utilisateur :
+[2026-08-04 20:59:26Z]   supabase.from("profiles").update({ credits: 9999, plan: "pro" })
+[2026-08-04 20:59:26Z]                            .eq("id", "56d64ff5-57d1-427c-b896-c4444e435635")
+[2026-08-04 20:59:26Z] Réponse : refus de PostgREST — 42501 permission denied for table profiles
+[2026-08-04 20:59:26Z] Solde et plan après l'attaque : 2 crédits, plan « starter »
+[2026-08-04 20:59:26Z] 
+[2026-08-04 20:59:26Z] Non-régression : la modification de full_name reste possible
 
 ✅ BLOQUÉ — la modification de `credits` et `plan` par l'utilisateur est refusée par la base
 Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76

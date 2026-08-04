@@ -1,0 +1,55 @@
+-- ============================================
+-- MIGRATION 007 : Revue des policies RLS (B2.5)
+-- ============================================
+-- Revue des six tables du schéma public. Constat général : les rôles anon et
+-- authenticated disposent des droits larges accordés par 000 — c'est l'état
+-- normal d'un projet Supabase, où la protection repose entièrement sur la RLS.
+-- Toute table créée sans RLS activée serait donc entièrement ouverte : le
+-- réflexe à conserver est d'activer la RLS dès la création.
+--
+-- État relevé après 006 :
+--
+--   table                 RLS   policies
+--   profiles              oui   SELECT (sienne), UPDATE (sienne, colonnes
+--                               restreintes par 003 et 006)              → correct
+--   credit_transactions   oui   SELECT (siennes) uniquement              → correct
+--   subscriptions         oui   SELECT (siennes) uniquement              → correct
+--   site_settings         oui   aucune — accès réservé au service_role   → correct
+--   stripe_events         oui   aucune — accès réservé au service_role   → correct
+--   video_generations     oui   SELECT (siennes) + INSERT (siennes)      → À CORRIGER
+--
+-- ============================================
+-- Le défaut : « Users can insert own videos »
+-- ============================================
+-- La policy (001_initial_schema.sql:195-197) autorise un utilisateur à insérer
+-- une ligne dès lors qu'elle porte son propre user_id. Or c'est lui qui choisit
+-- le heygen_video_id de cette ligne.
+--
+-- Le contrôle de propriété ajouté sur /api/video-download et /api/video-status
+-- cherche précisément une ligne portant le heygen_video_id demandé et le
+-- user_id de l'appelant. Il suffit donc de créer cette ligne soi-même pour le
+-- satisfaire : le contrôle est neutralisé et la vidéo d'autrui redevient
+-- accessible.
+--
+-- Aucun code ne s'appuie sur cette policy : la seule insertion applicative se
+-- fait côté serveur avec la clé service_role (generate-video/route.ts), qui
+-- n'est soumise à aucune policy. La retirer ne casse rien.
+--
+-- Preuve : audit/preuves/scripts/07-rls-insertion-videos.mjs
+-- ============================================
+
+DROP POLICY IF EXISTS "Users can insert own videos" ON public.video_generations;
+
+-- Le SELECT reste : l'historique du tableau de bord lit les vidéos de
+-- l'utilisateur avec la clé anon. Aucune policy INSERT, UPDATE ou DELETE
+-- n'existe désormais sur cette table — toute écriture passe par le serveur.
+
+-- ============================================
+-- Rappel sur les droits de niveau table
+-- ============================================
+-- anon et authenticated conservent les GRANT larges de 000, y compris TRUNCATE.
+-- La RLS ne s'applique pas à TRUNCATE, mais PostgREST ne l'expose pas : la
+-- commande n'est atteignable qu'avec une connexion PostgreSQL directe sous ces
+-- rôles, ce que Supabase ne permet pas. Le retrait de ce privilège
+-- s'écarterait de la configuration standard sans gain réel ; il est documenté
+-- ici plutôt que modifié.

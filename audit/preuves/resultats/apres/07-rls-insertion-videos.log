@@ -1,0 +1,13 @@
+
+==============================================================================
+07 — Contournement du contrôle de propriété par insertion directe
+==============================================================================
+[2026-08-04 20:59:33Z] Compte A : 56d64ff5-57d1-427c-b896-c4444e435635
+[2026-08-04 20:59:33Z] Demande sur la vidéo de B → HTTP 403
+[2026-08-04 20:59:33Z] 
+[2026-08-04 20:59:33Z] Insertion tentée avec la clé publique du site :
+[2026-08-04 20:59:33Z]   supabase.from("video_generations").insert({ user_id: "<A>", heygen_video_id: "heygen_video_appartenant_a_B" })
+[2026-08-04 20:59:33Z] Réponse : refus de PostgREST — 42501 new row violates row-level security policy for table "video_generations"
+[2026-08-04 20:59:33Z] Nouvelle demande sur la vidéo de B → HTTP 403
+
+✅ BLOQUÉ — l'insertion est refusée, le contrôle de propriété tient

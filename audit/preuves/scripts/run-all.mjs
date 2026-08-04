@@ -37,6 +37,11 @@ const PREUVES = [
   { fichier: "04-periode-abonnement.mjs", intitule: "Période d'abonnement erronée", reference: "B3.3" },
   { fichier: "05-mapping-price-ids.mjs", intitule: "Mapping des Price IDs", reference: "B3.5" },
   { fichier: "06-course-credits.mjs", intitule: "Course aux crédits", reference: "B1.3 / B1.6" },
+  {
+    fichier: "07-rls-insertion-videos.mjs",
+    intitule: "Contournement du contrôle de propriété",
+    reference: "B2.5",
+  },
 ];
 
 const ETIQUETTES = {

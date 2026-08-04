@@ -1,6 +1,6 @@
 # Résultats des preuves — phase « apres »
 
-Exécuté le 2026-08-04 19:01:02Z.
+Exécuté le 2026-08-04 20:59:33Z.
 
 | # | Faille | Plan | Verdict | Sortie complète |
 |---|---|---|---|---|
@@ -10,5 +10,6 @@ Exécuté le 2026-08-04 19:01:02Z.
 | 4 | Période d'abonnement erronée | B3.3 | ✅ BLOQUÉ | [04-periode-abonnement.log](./04-periode-abonnement.log) |
 | 5 | Mapping des Price IDs | B3.5 | ✅ BLOQUÉ | [05-mapping-price-ids.log](./05-mapping-price-ids.log) |
 | 6 | Course aux crédits | B1.3 / B1.6 | ✅ BLOQUÉ | [06-course-credits.log](./06-course-credits.log) |
+| 7 | Contournement du contrôle de propriété | B2.5 | ✅ BLOQUÉ | [07-rls-insertion-videos.log](./07-rls-insertion-videos.log) |
 
 Codes de sortie : `0` = bloqué, `1` = exploité, `2` = indéterminé.
