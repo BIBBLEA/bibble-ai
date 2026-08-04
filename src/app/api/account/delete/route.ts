@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // ============================================
 // POST /api/account/delete
@@ -42,6 +43,16 @@ export async function POST() {
     if (authError || !user) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
+
+    // Limitation de débit : action irréversible et en cascade sur quatre
+    // tables. La route n'a pas de paramètre `request` (session par cookies) :
+    // la clé est l'identifiant de l'utilisateur, ce qui est de toute façon la
+    // bonne granularité ici — c'est son compte qui est en jeu.
+    const limite = await appliquerQuota(
+      "suppression_compte",
+      cleUtilisateur(user.id)
+    );
+    if (limite) return limite;
 
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceRoleKey) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // ============================================
 // POST /api/stripe/checkout
@@ -34,6 +35,15 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // --- Limitation de débit ---
+    // Chaque appel crée un client et une session de paiement chez Stripe, et
+    // consomme le quota d'API de notre compte Stripe.
+    const limite = await appliquerQuota(
+      "paiement_stripe",
+      cleUtilisateur(user.id)
+    );
+    if (limite) return limite;
 
     // --- Récupérer le priceId ---
     const body = await request.json();

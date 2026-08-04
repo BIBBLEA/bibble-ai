@@ -210,7 +210,13 @@ Recette close : les parcours e-mail sont validés.
       donc inopérant en production (il échoue fermé). Mieux : remplacer la comparaison d'e-mail par un
       flag `is_admin` en base ou un custom claim JWT.
       → **fait** le 2026-08-04. `006_flag_admin.sql` — colonne `is_admin`, hors de portée du client. Le contrôle par `ADMIN_EMAIL` est supprimé du code : une seconde voie d'accès rouvrirait ce que le correctif ferme. Vérifié : 403 pour un compte ordinaire, 200 une fois le droit posé, 403 après retrait.
-- [ ] **B2.4** Rate limiting applicatif sur `/api/generate-video` et les routes mutantes
+- [x] **B2.4** Rate limiting applicatif sur `/api/generate-video` et les routes mutantes
+      → **fait** le 2026-08-04. `008_limitation_debit.sql` — compteurs partagés en base et
+      fonction atomique réservée au `service_role` : un compteur en mémoire ne tient pas sur des
+      fonctions serverless, où chaque instance a le sien. Six quotas nommés dans `src/lib/rate-limit.ts`,
+      clé par utilisateur (et par IP avant authentification sur la génération vidéo). Échec fermé sur
+      les routes à effet externe irréversible, ouvert sur les lectures de statut. Vérifié :
+      onze appels à `/api/generate-video`, le onzième répond 429 avec `Retry-After`.
 - [x] **B2.5** Revue complète des policies RLS sur `profiles`, `video_generations`,
       `credit_transactions`, `subscriptions`, `site_settings`
       → **fait** le 2026-08-04. `007_revue_rls.sql` — revue des six tables. La policy « Users can insert own videos » permettait de se déclarer propriétaire de la vidéo d'autrui et **neutralisait le correctif B2.1** ; elle est retirée, aucun code ne s'en servait. Preuve : `07-rls-insertion-videos.mjs`, ❌ puis ✅.

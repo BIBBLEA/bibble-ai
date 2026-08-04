@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // ============================================
 // GET /api/video-download?video_id=xxx
@@ -38,6 +39,13 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // --- Limitation de débit ---
+    // Route en GET mais mutante : elle réécrit `video_url` et
+    // `thumbnail_url` en base après un appel à HeyGen. Même quota que
+    // /api/video-status, dont elle partage le rythme d'appel.
+    const limite = await appliquerQuota("suivi_video", cleUtilisateur(user.id));
+    if (limite) return limite;
 
     // --- Récupérer le video_id depuis les query params ---
     const { searchParams } = new URL(request.url);

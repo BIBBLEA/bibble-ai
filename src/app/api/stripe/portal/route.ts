@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // ============================================
 // POST /api/stripe/portal
@@ -35,6 +36,15 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // --- Limitation de débit ---
+    // Même quota que /api/stripe/checkout : les deux routes créent des objets
+    // chez Stripe et partagent le quota d'API de notre compte.
+    const limite = await appliquerQuota(
+      "paiement_stripe",
+      cleUtilisateur(user.id)
+    );
+    if (limite) return limite;
 
     // --- Récupérer le customer Stripe ---
     const supabaseAdmin = createClient<Database>(

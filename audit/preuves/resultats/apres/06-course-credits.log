@@ -2,17 +2,17 @@
 ==============================================================================
 06 — Course aux crédits : 5 générations simultanées avec 1 seul crédit
 ==============================================================================
-[2026-08-04 20:59:31Z] Compte A (56d64ff5-57d1-427c-b896-c4444e435635) : solde fixé à 1 crédit, historique vidéo vidé
-[2026-08-04 20:59:31Z] Fonction consume_credit détectée : le chemin atomique est testé.
-[2026-08-04 20:59:31Z] 
-[2026-08-04 20:59:31Z] Lancement de 5 requêtes simultanées…
-[2026-08-04 20:59:32Z]   requête 1 : ✔ vidéo lancée — solde lu : 0
-[2026-08-04 20:59:32Z]   requête 2 : ✖ refusée (insufficient_credits)
-[2026-08-04 20:59:32Z]   requête 3 : ✖ refusée (insufficient_credits)
-[2026-08-04 20:59:32Z]   requête 4 : ✖ refusée (insufficient_credits)
-[2026-08-04 20:59:32Z]   requête 5 : ✖ refusée (insufficient_credits)
-[2026-08-04 20:59:32Z] 
-[2026-08-04 20:59:32Z] Vidéos lancées : 1 — attendu avec 1 crédit : 1
-[2026-08-04 20:59:32Z] Solde final : 0 crédits
+[2026-08-04 21:25:39Z] Compte A (4fae919b-2cf1-4076-a5b5-ac0f9987ee90) : solde fixé à 1 crédit, historique vidéo vidé
+[2026-08-04 21:25:39Z] Fonction consume_credit détectée : le chemin atomique est testé.
+[2026-08-04 21:25:40Z] 
+[2026-08-04 21:25:40Z] Lancement de 5 requêtes simultanées…
+[2026-08-04 21:25:40Z]   requête 1 : ✔ vidéo lancée — solde lu : 0
+[2026-08-04 21:25:40Z]   requête 2 : ✖ refusée (insufficient_credits)
+[2026-08-04 21:25:40Z]   requête 3 : ✖ refusée (insufficient_credits)
+[2026-08-04 21:25:40Z]   requête 4 : ✖ refusée (insufficient_credits)
+[2026-08-04 21:25:40Z]   requête 5 : ✖ refusée (insufficient_credits)
+[2026-08-04 21:25:40Z] 
+[2026-08-04 21:25:40Z] Vidéos lancées : 1 — attendu avec 1 crédit : 1
+[2026-08-04 21:25:40Z] Solde final : 0 crédits
 
 ✅ BLOQUÉ — une seule vidéo a été lancée, les 4 autres requêtes ont été refusées

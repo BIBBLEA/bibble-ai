@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // Le droit d'administration est porté par la colonne `profiles.is_admin`
 // (migration 006), pas par une adresse e-mail. ADMIN_EMAIL n'est plus lu :
@@ -95,6 +96,14 @@ export async function PATCH(request: NextRequest) {
   if (!admin) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
+
+  // --- Limitation de débit ---
+  // Seul le PATCH est limité : le GET ne fait que lire. La clé est
+  // l'administrateur lui-même — le quota borne un jeton d'administration
+  // détourné ou une interface qui boucle, pas un abus anonyme, le contrôle
+  // `profiles.is_admin` ayant déjà filtré l'appelant.
+  const limite = await appliquerQuota("administration", cleUtilisateur(admin.id));
+  if (limite) return limite;
 
   const supabaseAdmin = getSupabaseAdmin();
   const body = await request.json();

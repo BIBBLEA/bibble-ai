@@ -188,6 +188,29 @@ export type Database = {
         };
         Relationships: [];
       };
+      rate_limits: {
+        // Compteurs de limitation de débit (migration 008).
+        // Clé composée (bucket, subject, window_start), aucune clé technique.
+        Row: {
+          bucket: string;
+          subject: string;
+          window_start: string;
+          count: number;
+        };
+        Insert: {
+          bucket: string;
+          subject: string;
+          window_start: string;
+          count?: number;
+        };
+        Update: {
+          bucket?: string;
+          subject?: string;
+          window_start?: string;
+          count?: number;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           id: string;
@@ -269,6 +292,25 @@ export type Database = {
           reason: "ok" | "profile_not_found" | "invalid_mode";
           balance: number | null;
           previous_balance: number | null;
+        };
+      };
+      // 008_limitation_debit.sql — compteur de limitation de débit
+      check_rate_limit: {
+        Args: {
+          p_bucket: string;
+          p_subject: string;
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: {
+          allowed: boolean;
+          reason: "ok" | "rate_limited" | "invalid_quota";
+          limit: number;
+          remaining: number;
+          /** Fin de la fenêtre, ISO 8601. */
+          reset_at: string;
+          /** Secondes avant réouverture, à recopier dans Retry-After. */
+          retry_after: number;
         };
       };
     };

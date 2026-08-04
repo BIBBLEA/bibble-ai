@@ -9,6 +9,7 @@ import {
   MAX_SCRIPT_CHARACTERS,
   getVideoFormat,
 } from "@/lib/heygen-config";
+import { appliquerQuota, cleIp, cleUtilisateur } from "@/lib/rate-limit";
 
 const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY!;
 const HEYGEN_BASE_URL = "https://api.heygen.com";
@@ -49,6 +50,13 @@ async function rembourserCredit(
 
 export async function POST(request: NextRequest) {
   try {
+    // Limitation de débit par IP, AVANT l'authentification : la vérification du
+    // jeton est elle-même un aller-retour réseau vers Supabase, et une rafale
+    // de jetons invalides n'est imputable à aucun compte. Quota large, une IP
+    // pouvant être partagée (voir src/lib/rate-limit.ts).
+    const limiteIp = await appliquerQuota("generation_video_ip", cleIp(request));
+    if (limiteIp) return limiteIp;
+
     const authHeader = request.headers.get("authorization");
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -70,6 +78,14 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Limitation de débit par utilisateur, avant le débit du crédit et l'appel
+    // HeyGen : les crédits bornent la dépense totale, pas la rafale.
+    const limiteUtilisateur = await appliquerQuota(
+      "generation_video",
+      cleUtilisateur(user.id)
+    );
+    if (limiteUtilisateur) return limiteUtilisateur;
 
     const body = await request.json();
     const { script, avatarId, voiceId, format, sceneDescription } = body;

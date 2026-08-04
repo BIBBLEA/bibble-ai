@@ -2,16 +2,16 @@
 ==============================================================================
 03 — Rejeu d'un événement Stripe : double attribution de crédits
 ==============================================================================
-[2026-08-04 20:59:29Z] Compte A (56d64ff5-57d1-427c-b896-c4444e435635) remis à 0 crédit, plan « starter »
-[2026-08-04 20:59:29Z] Événement forgé : customer.subscription.updated — id evt_preuve_rejeu_idempotence
-[2026-08-04 20:59:29Z] Signature calculée localement (aucun appel réseau vers Stripe)
-[2026-08-04 20:59:29Z] 
-[2026-08-04 20:59:29Z] Envoi n°1 → HTTP 200 {"received":true}
-[2026-08-04 20:59:29Z]   solde après le 1er envoi : 6 crédits
-[2026-08-04 20:59:29Z] Envoi n°2 → HTTP 200 {"received":true,"duplicate":true}
-[2026-08-04 20:59:29Z]   solde après le 2e envoi (même événement) : 6 crédits
-[2026-08-04 20:59:29Z] 
-[2026-08-04 20:59:29Z] Lignes dans credit_transactions pour cet abonnement : 1
-[2026-08-04 20:59:29Z]   1. 2026-08-04T20:59:29.684678+00:00 — +6 — Changement de plan → growth — 6 crédits
+[2026-08-04 21:25:36Z] Compte A (4fae919b-2cf1-4076-a5b5-ac0f9987ee90) remis à 0 crédit, plan « starter »
+[2026-08-04 21:25:36Z] Événement forgé : customer.subscription.updated — id evt_preuve_rejeu_idempotence
+[2026-08-04 21:25:36Z] Signature calculée localement (aucun appel réseau vers Stripe)
+[2026-08-04 21:25:36Z] 
+[2026-08-04 21:25:36Z] Envoi n°1 → HTTP 200 {"received":true}
+[2026-08-04 21:25:36Z]   solde après le 1er envoi : 6 crédits
+[2026-08-04 21:25:36Z] Envoi n°2 → HTTP 200 {"received":true,"duplicate":true}
+[2026-08-04 21:25:37Z]   solde après le 2e envoi (même événement) : 6 crédits
+[2026-08-04 21:25:37Z] 
+[2026-08-04 21:25:37Z] Lignes dans credit_transactions pour cet abonnement : 1
+[2026-08-04 21:25:37Z]   1. 2026-08-04T21:25:36.822395+00:00 — +6 — Changement de plan → growth — 6 crédits
 
 ✅ BLOQUÉ — le rejeu du même événement n'a produit qu'une seule attribution
