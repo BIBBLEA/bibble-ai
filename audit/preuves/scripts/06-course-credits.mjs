@@ -8,32 +8,21 @@ import {
 } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 06 — Course aux crédits (read-then-write non transactionnel)
+// PREUVE 06 — Course aux crédits (B1.3 / B1.6)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B1.3 et B1.6
-// Origine      : src/app/api/generate-video/route.ts:98-181
+// Démontrer le correctif : débiter le crédit en une opération indivisible avant l'appel au
+// prestataire, et le rembourser en cas d'échec.
 //
-//   const { data: profile } = await supabaseAdmin
-//     .from("profiles").select("credits, plan").eq("id", user.id).single();   ← lecture
-//   if (profile.credits <= 0) return 403;
-//   ... await fetch(HEYGEN /v3/videos) ...                                    ← plusieurs secondes
-//   const newBalance = profile.credits - 1;                                   ← écriture
-//   await supabaseAdmin.from("profiles").update({ credits: newBalance })...
+// Cible : src/app/api/generate-video/route.ts:98-181 — solde lu, appel HeyGen de plusieurs
+//         secondes, puis solde écrit à partir de la valeur lue. N requêtes parallèles lisent le
+//         même solde et aboutissent toutes.
+// Méthode : reproduire la séquence contre la base, l'appel HeyGen remplacé par une attente. La
+//           route n'est pas appelée directement : chaque requête aboutie déclencherait une
+//           génération facturée, et HEYGEN_BASE_URL est codé en dur (route.ts:13).
+//           Si la fonction `consume_credit` existe en base, le chemin corrigé est testé.
 //
-// Entre la lecture et l'écriture s'intercale un appel réseau de plusieurs
-// secondes. N requêtes lancées en parallèle lisent toutes le même solde, passent
-// toutes le contrôle, et écrivent toutes la même valeur : N vidéos sont produites
-// avec un seul crédit.
-//
-// La route n'est volontairement pas appelée telle quelle : chaque requête qui
-// réussirait déclencherait une génération HeyGen réellement facturée, et
-// HEYGEN_BASE_URL est codé en dur dans le fichier (route.ts:13), donc non
-// redirigeable vers un service local. Le script reproduit donc la séquence
-// exacte de la route contre la base, en remplaçant l'appel HeyGen par une
-// attente équivalente.
-//
-// Si une fonction atomique `consume_credit` existe en base (correctif B1.1), le
-// script l'utilise à la place : le même test mesure alors le chemin corrigé.
+// Avant : 5 vidéos lancées, 1 crédit débité — code 1
+// Après : 1 vidéo lancée, 4 requêtes refusées — code 0
 // ============================================
 
 const REQUETES_PARALLELES = 5;

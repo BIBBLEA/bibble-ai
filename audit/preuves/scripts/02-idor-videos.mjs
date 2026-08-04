@@ -10,26 +10,21 @@ import {
 } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 02 — IDOR sur /api/video-download et /api/video-status
+// PREUVE 02 — Accès aux vidéos d'autrui (B2.1 / B2.2)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B2.1 et B2.2
-// Origine      : src/app/api/video-download/route.ts:53-102
-//                src/app/api/video-status/route.ts:85-121
+// Démontrer le correctif : vérifier la propriété de la vidéo avant tout traitement.
 //
-// Les deux routes authentifient bien l'appelant, puis appellent HeyGen avec le
-// `video_id` reçu et renvoient le résultat. Le seul endroit où `user.id` est
-// utilisé est le `.eq("user_id", user.id)` de la mise à jour en base
-// (video-download/route.ts:96) — la *réponse*, elle, n'est jamais filtrée.
-// Aucune requête ne vérifie que la vidéo demandée appartient à l'appelant.
+// Cible : src/app/api/video-download/route.ts:53-102
+//         src/app/api/video-status/route.ts:85-121
+//         Le `.eq("user_id", user.id)` ne filtre que la mise à jour en base, jamais la réponse.
+// Méthode : test différentiel — demander sa propre vidéo, puis celle d'un autre compte.
+//           Réponses identiques = aucun contrôle de propriété.
 //
-// Méthode : test différentiel. Le compte A demande sa propre vidéo, puis celle
-// de B. Si les deux appels reçoivent la même réponse, la route ne distingue pas
-// le propriétaire d'un tiers : le contrôle d'accès est absent.
+// Note : sans clé HeyGen valide, les deux appels échouent en 502. C'est ce qui prouve l'absence
+//        de contrôle : un refus 403 devrait intervenir avant l'appel HeyGen.
 //
-// Note : en local, sans clé HeyGen valide, l'appel amont échoue et les deux
-// réponses sont des erreurs HeyGen (502). C'est précisément ce qui prouve
-// l'absence de contrôle : une route correcte aurait répondu 403 sur la vidéo de
-// B *avant* de contacter HeyGen. Après correctif, les deux réponses diffèrent.
+// Avant : réponses identiques sur sa vidéo et celle d'autrui — code 1
+// Après : 403 sur la vidéo d'autrui — code 0
 // ============================================
 
 titre("02 — IDOR : accès aux vidéos d'un autre utilisateur");

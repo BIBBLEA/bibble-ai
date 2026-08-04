@@ -2,24 +2,17 @@ import { readFile } from "node:fs/promises";
 import { indetermine, log, titre, verdict } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 04 — Période d'abonnement erronée
+// PREUVE 04 — Période d'abonnement erronée (B3.3)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B3.3
-// Origine      : src/app/api/webhooks/stripe/route.ts:36-44
+// Démontrer le correctif : renseigner `start` avec `current_period_start`.
 //
-//   return {
-//     start: new Date(item.current_period_end * 1000).toISOString(),   ← devrait
-//     end:   new Date(item.current_period_end * 1000).toISOString(),      être _start
-//   };
+// Cible : src/app/api/webhooks/stripe/route.ts:36-44 — `start` reçoit `current_period_end`,
+//         les deux bornes écrites en base sont donc identiques.
+// Méthode : extraire la fonction du fichier source et l'exécuter telle quelle. Le code livré est
+//           réellement exécuté, pas relu.
 //
-// Conséquence : `subscriptions.current_period_start` reçoit la date de *fin* de
-// période. Les deux bornes sont donc toujours identiques en base, et toute
-// logique s'appuyant sur la date de début d'abonnement est fausse.
-//
-// Méthode : la fonction n'est pas exportée, elle est donc extraite du fichier
-// source et exécutée telle quelle, avec un abonnement dont les deux bornes
-// diffèrent d'un mois. Ce n'est pas une relecture du code : le code livré est
-// réellement exécuté.
+// Avant : période du 01/08 au 01/09 → start = end = 01/09 — code 1
+// Après : start = 01/08, end = 01/09 — code 0
 // ============================================
 
 const CHEMIN = new URL("../../../src/app/api/webhooks/stripe/route.ts", import.meta.url);

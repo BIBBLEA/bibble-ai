@@ -2,23 +2,19 @@ import Stripe from "stripe";
 import { COMPTE_A, clientAdmin, log, seConnecter, titre, urlApp, verdict } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 05 — Mapping des Price IDs et paiement sans crédit
+// PREUVE 05 — Table des tarifs incomplète (B3.5)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B3.5
-// Origine      : src/lib/stripe.ts (PLAN_CREDITS)
-//                src/app/api/webhooks/stripe/route.ts:20-30 (PLAN_CONFIG)
+// Démontrer le correctif : écarter les entrées vides et signaler tout tarif inconnu.
 //
-//   [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: { plan: "starter", ... },
+// Cible : src/lib/stripe.ts (PLAN_CREDITS) et src/app/api/webhooks/stripe/route.ts:20-30 —
+//         `[process.env.X || ""]` produit la clé "" dès qu'une variable manque ; plusieurs
+//         variables manquantes s'écrasent sur cette même clé. Un tarif inconnu sort en `break`
+//         silencieux (route.ts:97-100).
+// Méthode : volet A — charger le module livré avec 3 variables sur 6 (aucun prérequis)
+//           volet B — poster un tarif inconnu au webhook (application en ligne)
 //
-// Une variable absente produit la clé "". Plusieurs variables absentes produisent
-// donc *la même* clé et s'écrasent mutuellement : le mapping perd des entrées
-// sans le moindre signal. Couplé au `break` silencieux sur un priceId inconnu
-// (route.ts:97-100), un paiement est encaissé, le webhook répond 200, et aucun
-// crédit n'est attribué.
-//
-// Deux volets :
-//   A. le mapping s'effondre quand des variables manquent   (aucun prérequis)
-//   B. un priceId inconnu donne 200 sans crédit ni alerte   (application en ligne)
+// Avant : 4 entrées au lieu de 6, clé vide à 15 crédits ; tarif inconnu accepté sans crédit — code 1
+// Après : aucune entrée vide, tarif inconnu signalé — code 0
 // ============================================
 
 titre("05 — Mapping des Price IDs : effondrement silencieux et paiement sans crédit");

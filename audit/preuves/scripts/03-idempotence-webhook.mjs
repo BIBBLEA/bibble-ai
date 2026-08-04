@@ -12,22 +12,19 @@ import {
 } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 03 — Absence d'idempotence du webhook Stripe
+// PREUVE 03 — Rejeu d'une notification Stripe (B3.1 / B3.2)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B3.1 et B3.2
-// Origine      : src/app/api/webhooks/stripe/route.ts:46-296
+// Démontrer le correctif : mémoriser les `event.id` traités et ignorer les répétitions.
 //
-// Le handler vérifie correctement la signature, mais ne mémorise jamais les
-// `event.id` déjà traités. Stripe rejoue un événement lorsqu'il ne reçoit pas de
-// 2xx — ce que le handler provoque lui-même en répondant 500 sur exception
-// (route.ts:299-305). Chaque rejeu réattribue le plein montant de crédits du
-// plan et duplique la ligne dans `credit_transactions`.
+// Cible : src/app/api/webhooks/stripe/route.ts:46-296 — signature vérifiée, événements jamais
+//         dédupliqués. Stripe rejoue sur absence de 2xx, ce que le handler provoque lui-même en
+//         répondant 500 (route.ts:299-305).
+// Méthode : poster deux fois le même `event.id` avec une signature valide. Signature calculée
+//           localement (generateTestHeaderString), aucun compte Stripe requis. L'événement
+//           `customer.subscription.updated` est le seul traité sans appel à l'API Stripe.
 //
-// Méthode : le même événement, avec le même `event.id`, est posté deux fois avec
-// une signature valide. La signature est fabriquée localement par la librairie
-// Stripe (`generateTestHeaderString`) : aucun appel réseau vers Stripe, aucun
-// compte nécessaire. L'événement choisi, `customer.subscription.updated`, est
-// traité par le handler sans aucun appel à l'API Stripe.
+// Avant : 2 attributions de crédits pour 1 événement — code 1
+// Après : 1 seule attribution — code 0
 // ============================================
 
 const ID_EVENEMENT = "evt_preuve_rejeu_idempotence";

@@ -9,21 +9,17 @@ import {
 } from "./_lib.mjs";
 
 // ============================================
-// PREUVE 01 — Escalade de crédits via RLS
+// PREUVE 01 — Escalade de crédits via RLS (B0.1)
 // ============================================
-// Faille visée : audit/plan-implementation.md § B0.1
-// Origine      : supabase/migrations/001_initial_schema.sql:186-188
+// Démontrer le correctif : réserver la modification de `credits` et `plan` au serveur.
 //
-//   CREATE POLICY "Users can update own profile"
-//     ON public.profiles FOR UPDATE
-//     USING (auth.uid() = id);        ← ni WITH CHECK, ni restriction de colonnes
+// Cible : supabase/migrations/001_initial_schema.sql:186-188 — policy UPDATE sans WITH CHECK
+//         ni restriction de colonnes.
+// Méthode : reproduire ce qu'un utilisateur peut taper dans la console de son navigateur,
+//           avec la clé anon publiée dans le bundle du site.
 //
-// Conséquence : un utilisateur authentifié, avec la seule clé anon (publique,
-// présente dans le bundle JavaScript du site), peut modifier n'importe quelle
-// colonne de son propre profil — y compris `credits` et `plan`.
-//
-// Ce script reproduit exactement ce qu'un utilisateur peut taper dans la console
-// de son navigateur, sans aucun outil particulier.
+// Avant : solde porté à 9 999 crédits, plan « pro » — code 1
+// Après : modification refusée — code 0
 // ============================================
 
 const CREDITS_VISES = 9999;
