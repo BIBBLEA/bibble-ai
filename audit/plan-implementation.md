@@ -6,7 +6,11 @@
 Le plan est organisé en **deux blocs indépendants** :
 
 - **[BLOC A — Resend / E-mails & Authentification](#bloc-a--resend--e-mails--authentification)** : rendre tous les parcours e-mail fonctionnels de bout en bout (priorité de la mission)
-- **[BLOC B — Stripe / Paiements & Crédits](#bloc-b--stripe--paiements--crédits)** : sécurité des crédits, idempotence des webhooks, passage en production
+- **[BLOC B — Stripe / Paiements & Crédits](#bloc-b--stripe--paiements--crédits)** : sécurité des crédits, idempotence des webhooks
+
+> **Périmètre** : les deux blocs sont des correctifs applicatifs, recettés en local et en sandbox
+> Stripe. La bascule du compte Stripe en mode live (tarifs, webhook et clés de production) relève de
+> l'administration du compte et sort du périmètre de ce plan.
 
 ---
 
@@ -124,9 +128,9 @@ Les six modèles français sont écrits, collés dans Supabase et vérifiés en 
 - [x] **A6.2** ~~Ajouter `https://www.bibble-ai.com/auth/update-password` et `/api/auth/callback` aux
       Redirect URLs Supabase~~ — fait le 2026-08-04 : les deux entrées sont enregistrées (5 URLs au
       total). Le wildcard `/**` les couvrait déjà, l'ajout documente l'intention.
-- [ ] **A6.3** Domaine canonique : `www.bibble-ai.com`. La redirection depuis l'apex est déjà en
-      place (308, vérifiée le 2026-08-04). Reste à uniformiser le webhook Stripe, qui vise encore
-      `bibble-ai-kappa.vercel.app` en test — le webhook live devra pointer sur le domaine de prod.
+- [x] **A6.3** ~~Domaine canonique : `www.bibble-ai.com`~~ — la redirection depuis l'apex est déjà en
+      place (308, vérifiée le 2026-08-04). Le webhook Stripe de sandbox vise `bibble-ai-kappa.vercel.app`,
+      ce qui est normal pour l'environnement de test.
 - [x] **A6.4** ~~Trancher le sort de `RESEND_API_KEY`~~ — tranché : on s'en tient au SMTP Supabase,
       un seul canal d'envoi. La variable est supprimée de Vercel (2026-08-04).
       **Reste à faire côté Resend** : révoquer la clé « Vercel Integration » **et déconnecter
@@ -205,24 +209,14 @@ Recette close : les parcours e-mail sont validés.
 - [ ] **B3.3** Corriger `getSubscriptionPeriod` (`route.ts:43-46`) : `start` doit utiliser
       `current_period_start`, pas `current_period_end` — les deux bornes sont identiques aujourd'hui
 - [ ] **B3.4** Journaliser les événements non gérés plutôt que de les ignorer silencieusement
-- [ ] **B3.5** Rejeu depuis la sandbox (Workbench → Send test events) : double envoi du même événement
-      → un seul traitement ; vérifier les périodes en base
-
-## B4 — Passage en production Stripe
-
-- [x] **B4.1** ✅ Activation du compte Stripe live `acct_1Tr0lOF37MrM9Z0l` — **faite**
-      (confirmée le 2026-08-04). Les étapes B4.2 à B4.6 sont donc débloquées ; il me faut un accès au
-      dashboard en mode live (ou, a minima, le secret `whsec_` du webhook de production).
-- [ ] **B4.2** Recréer les 3 produits × 2 périodicités en mode live et récupérer les 6 price IDs
-- [ ] **B4.3** Mettre à jour les 12 variables `*STRIPE_PRICE_*` sur Vercel (Production)
-- [ ] **B4.4** Créer le webhook live vers `https://www.bibble-ai.com/api/webhooks/stripe` avec les 4
-      événements (`checkout.session.completed`, `invoice.payment_succeeded`,
-      `customer.subscription.updated`, `customer.subscription.deleted`) et reporter le `whsec_` live
-      dans `STRIPE_WEBHOOK_SECRET`
-- [ ] **B4.5** Basculer `STRIPE_SECRET_KEY` et `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` sur les clés live
-      en Production uniquement (conserver les clés test en Preview/Development)
-- [ ] **B4.6** Test réel de bout en bout : checkout petit montant → webhook → crédits attribués →
-      remboursement
+- [ ] **B3.5** Durcir le mapping des Price IDs : `PLAN_CONFIG` (`route.ts:20-30`) et `PLAN_CREDITS`
+      (`src/lib/stripe.ts`) sont construits avec `process.env.X || ""`. Une variable manquante crée la
+      clé `""` et plusieurs variables manquantes s'écrasent sur cette même clé, faussant le mapping
+      sans bruit. Filtrer les clés vides à la construction, et rendre le `priceId` inconnu bruyant
+      (`route.ts:97-100` fait aujourd'hui un `break` discret : le paiement est accepté, aucun crédit
+      n'est attribué, aucune alerte).
+- [ ] **B3.6** Rejeu depuis la sandbox (Workbench → Send test events, ou `stripe trigger` via le CLI) :
+      double envoi du même événement → un seul traitement ; vérifier les périodes en base
 
 ---
 
@@ -232,13 +226,10 @@ Recette close : les parcours e-mail sont validés.
 BLOC A (e-mails)          ─── indépendant, prioritaire ───────────────┐
                                                                       ├── PR vers main
 BLOC B  B0 (faille RLS)   ─── à traiter immédiatement ────────────────┤
-        B1 → B2 → B3      ─── testables en sandbox ──────────────────┤
-        B4                ─── débloqué (compte live activé) ─────────┘
-                              nécessite un accès Stripe en mode live
+        B1 → B2 → B3      ─── testables en sandbox ──────────────────┘
 ```
 
-**Accès et actions administratives** : regroupés dans
-[actions-cliente.md](./actions-cliente.md). L'activation du compte Stripe live (B4.1) est faite ;
-le point ouvert est désormais l'accès au dashboard live pour créer tarifs et webhook.
+L'ensemble du plan est recetté en local et en sandbox Stripe : aucune étape ne requiert le compte
+en mode live.
 
 Chaque section donne lieu à un ou plusieurs commits sur `fix-stripe-resend`.
