@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -18,6 +19,15 @@ if (!["avant", "apres"].includes(phase)) {
 
 const ici = path.dirname(fileURLToPath(import.meta.url));
 const dossierSortie = path.join(ici, "..", "resultats", phase);
+
+// Une phase déjà capturée ne doit pas être écrasée : rejouer « avant » après un
+// correctif remplacerait la preuve de la faille par un résultat corrigé.
+if (existsSync(path.join(dossierSortie, "RECAPITULATIF.md")) && !process.argv.includes("--force")) {
+  console.error(`La phase « ${phase} » a déjà été capturée dans resultats/${phase}/.`);
+  console.error("Ajouter --force pour l'écraser volontairement.");
+  process.exit(2);
+}
+
 await mkdir(dossierSortie, { recursive: true });
 
 const PREUVES = [

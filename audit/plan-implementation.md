@@ -158,16 +158,20 @@ Recette close : les parcours e-mail sont validés.
 
 ## B0 — 🔴 Faille critique à corriger en priorité
 
-- [ ] **B0.1** **La policy RLS `Users can update own profile` (`001_initial_schema.sql:186-188`) n'a
-      pas de clause `WITH CHECK` ni de restriction de colonnes.** Un utilisateur authentifié peut donc
-      modifier son propre profil depuis la console du navigateur avec la clé anon publique — **y
-      compris les colonnes `credits` et `plan`** — et s'attribuer des crédits illimités.
-      Correctif : restreindre l'UPDATE aux colonnes non sensibles (policy avec `WITH CHECK` comparant
-      `credits`/`plan` aux valeurs existantes, ou révocation du `UPDATE` sur ces colonnes via
-      `REVOKE UPDATE (credits, plan) ON public.profiles FROM authenticated`), les modifications de
-      crédits passant exclusivement par les fonctions `SECURITY DEFINER` de B1.
+- [x] **B0.1** ~~La policy RLS `Users can update own profile` (`001_initial_schema.sql:186-188`)
+      n'avait ni clause `WITH CHECK` ni restriction de colonnes~~ — **corrigé** le 2026-08-04
+      (`003_securisation_profiles.sql`). L'`UPDATE` est retiré au niveau table et rendu sur les
+      seules colonnes `full_name` et `avatar_url` ; `credits`, `plan` et les références Stripe sont
+      réservés au serveur. Le `WITH CHECK` interdit en outre de réaffecter la ligne.
+      Preuve : `resultats/avant/01-…log` (❌ solde 2 → 9 999) puis `resultats/apres/01-…log`
+      (✅ 42501, solde inchangé, `full_name` toujours modifiable).
+      Ajoute `000_privileges_schema_public.sql` : les migrations s'appuyaient sur les privilèges
+      implicites d'un projet hébergé sans jamais les déclarer, si bien qu'une base recréée depuis le
+      dépôt n'avait aucun droit. Sans cet ordre — privilèges puis restrictions — le `REVOKE` de 003
+      était annulé.
 - [ ] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
-      `profiles.credits` avec la somme des `credit_transactions`)
+      `profiles.credits` avec la somme des `credit_transactions`) — **nécessite un accès en lecture
+      au projet hébergé**, non réalisable en local
 
 ## B1 — Crédits atomiques
 

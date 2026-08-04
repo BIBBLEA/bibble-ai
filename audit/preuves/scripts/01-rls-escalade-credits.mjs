@@ -66,6 +66,20 @@ if (exploite) {
   log(`Remise en état : solde restauré à ${avant.credits} crédits`);
 }
 
+// --- Non-régression : le cas légitime doit rester possible ---
+// dashboard/account/page.tsx:134 met à jour full_name depuis le navigateur.
+const { error: erreurNom } = await supabase
+  .from("profiles")
+  .update({ full_name: "Nom modifié depuis le navigateur" })
+  .eq("id", user.id);
+
+log("");
+log(
+  erreurNom
+    ? `⚠ Non-régression : la modification de full_name est refusée (${erreurNom.code} ${erreurNom.message})`
+    : "Non-régression : la modification de full_name reste possible"
+);
+
 verdict(
   exploite,
   `un utilisateur authentifié s'est attribué ${apres.credits} crédits et le plan « ${apres.plan} »` +

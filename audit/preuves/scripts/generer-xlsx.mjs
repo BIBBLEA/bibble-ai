@@ -35,10 +35,10 @@ const FAILLES = [
     script: "01-rls-escalade-credits.mjs",
     avant: "❌ Solde porté à 9 999 crédits, plan « pro » — code 1",
     preuveAvant: "✔ 2026-08-04 18:30Z — code 1 (resultats/avant/01-rls-escalade-credits.log)",
-    correctif: "Réserver la modification de « crédits » et « plan » au serveur.",
+    correctif: "Fait — 003_securisation_profiles.sql : UPDATE retiré au niveau table, rendu sur full_name et avatar_url uniquement. Crédits, plan et références Stripe réservés au serveur.",
     apres: "✅ Modification refusée, solde inchangé — code 0",
-    preuveApres: "En attente du correctif",
-    statut: "À corriger",
+    preuveApres: "✔ 2026-08-04 18:44Z — code 0 (resultats/apres/01-rls-escalade-credits.log)",
+    statut: "Corrigé",
   },
   {
     faille: "Accès aux vidéos d'un autre client",
@@ -234,7 +234,12 @@ FAILLES.forEach((faille, index) => {
     bold: faille.preuveAvant.startsWith("✔"),
     color: { argb: faille.preuveAvant.startsWith("✔") ? "FF2E7D32" : "FF7F6000" },
   };
-  ligne.getCell(15).font = { bold: true, color: { argb: "FFC00000" } };
+  const corrige = faille.statut.startsWith("Corrigé");
+  ligne.getCell(15).font = { bold: true, color: { argb: corrige ? "FF2E7D32" : "FFC00000" } };
+  ligne.getCell(14).font = {
+    bold: corrige,
+    color: { argb: corrige ? "FF2E7D32" : "FF7F6000" },
+  };
   ligne.getCell(15).alignment = { vertical: "top", horizontal: "center" };
 
   ligne.height = 78;
