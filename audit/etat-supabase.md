@@ -7,7 +7,8 @@
 
 | Élément | Valeur | Statut |
 |---|---|---|
-| Organisation | `lealaref6@gmail.com` — **plan Free** | ⚠️ |
+| Organisation | `lealaref6@gmail.com` — **plan Free**, 2 membres (Owner + compte de développement en **Developer**), MFA activée sur les deux | ⚠️ |
+| Droits du compte de développement | **Developer** = lecture seule sur la configuration Auth : l'édition des templates et des Redirect URLs est refusée (« You need additional permissions »). Le rôle **Administrator** est nécessaire pour intervenir | ⚠️ |
 | Projet | `lealaref6@gmail.com's Project` (ref `ixalcjbunskraviicnum`), instance **Nano**, `eu-west-1` | OK |
 | Site URL (Auth) | `https://www.bibble-ai.com` | OK |
 | Redirect URLs | `https://bibble-ai-kappa.vercel.app/**`, `https://www.bibble-ai.com/**`, `http://localhost:3000/**` | OK |

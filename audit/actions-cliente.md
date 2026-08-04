@@ -23,6 +23,22 @@ address »), sans logo ni identité visuelle.
 - [ ] Vérifier **Email OTP Expiration** = `3600` secondes (Authentication → Providers → Email)
 - [ ] Confirmer l'adresse de contact affichée en pied des e-mails (`contact@bibble-ai.com` par défaut)
 
+### 🤝 Alternative : élever les droits du compte de développement
+
+Le compte de développement est membre de l'organisation avec le rôle **Developer** — suffisant pour
+consulter, mais **pas pour modifier** : les boutons d'enregistrement des templates et des Redirect
+URLs affichent « You need additional permissions » (vérifié le 2026-08-04).
+
+Passer ce compte en **Administrator** permet de réaliser les points ci-dessus **et** ceux du §3 de
+[urls-callback.md](./supabase/urls-callback.md) sans manipulation manuelle.
+
+- [ ] Organisation → **Team** → menu ⋮ sur la ligne du membre → rôle **Administrator**
+
+Seul un compte **Owner** peut effectuer ce changement. Sur le plan Free, les rôles s'appliquent à
+toute l'organisation — les rôles limités à un projet sont réservés aux plans Team et Enterprise ;
+ici l'organisation ne contient que ce projet, la portée est donc identique. Administrator exclut
+les paramètres d'organisation, le transfert de projet et l'ajout de propriétaires.
+
 ---
 
 ## 2. Resend — ménage et sécurité du compte 🤝
