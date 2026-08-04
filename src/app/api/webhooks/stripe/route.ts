@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { construireTableTarifs, stripe } from "@/lib/stripe";
 import { Database } from "@/types/database";
 
 // ============================================
@@ -12,24 +12,31 @@ import { Database } from "@/types/database";
 // - invoice.payment_succeeded → Renouvellement mensuel (crédits)
 // - customer.subscription.updated → Changement de plan
 // - customer.subscription.deleted → Annulation
+//
+// Chaque événement n'est traité qu'une fois : son `event.id` est enregistré
+// dans la table stripe_events (migration 005) en tête de traitement.
 // ============================================
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
-// Mapping des Price IDs vers les plans et crédits
-const PLAN_CONFIG: Record<
-  string,
-  { plan: "starter" | "growth" | "pro"; credits: number }
-> = {
-  [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: { plan: "starter", credits: 2 },
-  [process.env.STRIPE_PRICE_STARTER_ANNUAL || ""]: { plan: "starter", credits: 2 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || ""]: { plan: "growth", credits: 6 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || ""]: { plan: "growth", credits: 6 },
-  [process.env.STRIPE_PRICE_PRO_MONTHLY || ""]: { plan: "pro", credits: 15 },
-  [process.env.STRIPE_PRICE_PRO_ANNUAL || ""]: { plan: "pro", credits: 15 },
-};
+type PlanTarifaire = { plan: "starter" | "growth" | "pro"; credits: number };
 
-function getPlanFromPriceId(priceId: string) {
+// Mapping des Price IDs vers les plans et crédits.
+// construireTableTarifs écarte les tarifs dont la variable d'environnement n'est
+// pas renseignée : sans ce filtre, chaque variable absente créait la clé "" et
+// les absences s'écrasaient entre elles, ne laissant qu'une entrée vide créditée
+// au tarif du dernier plan déclaré (voir src/lib/stripe.ts).
+const PLAN_CONFIG: Record<string, PlanTarifaire> = construireTableTarifs<PlanTarifaire>([
+  { variable: "STRIPE_PRICE_STARTER_MONTHLY", priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY, valeur: { plan: "starter", credits: 2 } },
+  { variable: "STRIPE_PRICE_STARTER_ANNUAL", priceId: process.env.STRIPE_PRICE_STARTER_ANNUAL, valeur: { plan: "starter", credits: 2 } },
+  { variable: "STRIPE_PRICE_GROWTH_MONTHLY", priceId: process.env.STRIPE_PRICE_GROWTH_MONTHLY, valeur: { plan: "growth", credits: 6 } },
+  { variable: "STRIPE_PRICE_GROWTH_ANNUAL", priceId: process.env.STRIPE_PRICE_GROWTH_ANNUAL, valeur: { plan: "growth", credits: 6 } },
+  { variable: "STRIPE_PRICE_PRO_MONTHLY", priceId: process.env.STRIPE_PRICE_PRO_MONTHLY, valeur: { plan: "pro", credits: 15 } },
+  { variable: "STRIPE_PRICE_PRO_ANNUAL", priceId: process.env.STRIPE_PRICE_PRO_ANNUAL, valeur: { plan: "pro", credits: 15 } },
+], "PLAN_CONFIG (webhook)");
+
+function getPlanFromPriceId(priceId: string | undefined): PlanTarifaire | null {
+  if (!priceId) return null;
   return PLAN_CONFIG[priceId] || null;
 }
 
@@ -38,12 +45,82 @@ function getSubscriptionPeriod(subscription: Stripe.Subscription) {
   const item = subscription.items.data[0];
   if (!item) return { start: null, end: null };
   return {
-    start: new Date(item.current_period_end * 1000).toISOString(),
+    start: new Date(item.current_period_start * 1000).toISOString(),
     end: new Date(item.current_period_end * 1000).toISOString(),
   };
 }
 
+type ClientAdmin = SupabaseClient<Database>;
+
+// --- Libérer un événement réclamé mais non traité ---
+// Retire la ligne de déduplication pour qu'un rejeu — automatique après un 500,
+// ou déclenché à la main depuis le tableau de bord Stripe — puisse reprendre le
+// traitement. Sans cela l'événement serait définitivement perdu : la ligne dirait
+// « déjà traité » alors que rien ne l'a été.
+async function libererEvenement(supabaseAdmin: ClientAdmin, eventId: string) {
+  const { error } = await supabaseAdmin
+    .from("stripe_events")
+    .delete()
+    .eq("id", eventId);
+
+  if (error) {
+    console.error(
+      `🚨 Événement ${eventId} : traitement échoué ET libération impossible ` +
+        `(${error.message}) — tout rejeu sera pris pour un doublon, reprise manuelle requise.`
+    );
+  }
+}
+
+// --- Tarif absent de la table des tarifs ---
+// Le paiement est encaissé côté Stripe mais aucun crédit ne peut être attribué :
+// c'est une anomalie de configuration (variable STRIPE_PRICE_* manquante ou
+// tarif créé dans Stripe sans être déclaré ici). Auparavant ce cas sortait par
+// un simple `break` : Stripe recevait 200 et l'abonné n'était jamais crédité,
+// sans la moindre alerte.
+//
+// On répond 202 : c'est un 2xx, donc Stripe ne rejoue pas en boucle, mais le
+// code se distingue nettement du 200 nominal dans le tableau de bord Stripe
+// comme dans les journaux. L'événement est libéré, de sorte qu'un renvoi manuel
+// après correction des variables d'environnement soit bien retraité.
+async function signalerTarifInconnu(
+  supabaseAdmin: ClientAdmin,
+  event: Stripe.Event,
+  priceId: string | undefined,
+  userId: string | null | undefined
+) {
+  console.error(
+    `🚨 ALERTE tarif Stripe inconnu — event ${event.id} (${event.type}) : ` +
+      `priceId « ${priceId ?? "(absent)"} » ne figure pas dans PLAN_CONFIG. ` +
+      `Utilisateur ${userId ?? "(inconnu)"} NON CRÉDITÉ. ` +
+      `Tarifs déclarés : ${Object.keys(PLAN_CONFIG).length}. ` +
+      `Vérifier les variables STRIPE_PRICE_* de l'environnement.`
+  );
+
+  await libererEvenement(supabaseAdmin, event.id);
+
+  return NextResponse.json(
+    {
+      received: true,
+      processed: false,
+      reason: "unknown_price_id",
+      price_id: priceId ?? null,
+      event_id: event.id,
+    },
+    { status: 202 }
+  );
+}
+
 export async function POST(request: NextRequest) {
+  // --- Client Supabase admin ---
+  // Créé hors du bloc try : le catch doit pouvoir libérer l'événement réclamé.
+  const supabaseAdmin = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // Identifiant de l'événement dont ce traitement détient la réclamation.
+  let evenementReclame: string | null = null;
+
   try {
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
@@ -67,11 +144,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Client Supabase admin ---
-    const supabaseAdmin = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // ==========================================
+    // IDEMPOTENCE — réclamer l'événement
+    // ==========================================
+    // Stripe rejoue une notification tant qu'il n'obtient pas de 2xx (et le
+    // handler déclenchait lui-même ces rejeux en répondant 500). Sans garde-fou,
+    // chaque rejeu réattribuait le plein montant de crédits du plan.
+    //
+    // L'insertion de l'`event.id` est faite AVANT tout traitement, et non après :
+    // c'est elle qui « réclame » l'événement. La clé primaire de stripe_events
+    // rend la réclamation atomique — deux livraisons simultanées du même
+    // événement ne peuvent pas réussir toutes les deux.
+    const { error: erreurReclamation } = await supabaseAdmin
+      .from("stripe_events")
+      .insert({ id: event.id, type: event.type });
+
+    if (erreurReclamation) {
+      // 23505 = violation de clé primaire : l'événement a déjà été réclamé.
+      if (erreurReclamation.code === "23505") {
+        console.log(
+          `↩️ Événement déjà traité, rejeu ignoré : ${event.id} (${event.type})`
+        );
+        return NextResponse.json(
+          { received: true, duplicate: true },
+          { status: 200 }
+        );
+      }
+
+      // Toute autre erreur (table absente, base injoignable) : on refuse de
+      // traiter sans garde-fou. Le 500 fait rejouer Stripe, qui retentera une
+      // fois la base de nouveau disponible.
+      console.error(
+        "Impossible d'enregistrer l'événement Stripe (traitement refusé) :",
+        erreurReclamation
+      );
+      return NextResponse.json(
+        { error: "Event deduplication unavailable" },
+        { status: 500 }
+      );
+    }
+
+    // Réclamation obtenue. Si le traitement échoue plus bas, elle sera relâchée
+    // (voir libererEvenement) : conserver la ligne signerait un traitement qui
+    // n'a pas eu lieu et l'abonné ne serait jamais crédité, alors que les
+    // écritures effectuées ici sont rejouables sans dommage — le solde est
+    // *remis* au montant du plan (et non incrémenté) et la ligne subscriptions
+    // est un upsert. Seule une ligne de journal dans credit_transactions peut se
+    // retrouver en double après un échec partiel, ce qui est un moindre mal face
+    // à un abonnement payé et non crédité.
+    evenementReclame = event.id;
 
     // --- Traiter les événements ---
     switch (event.type) {
@@ -95,8 +216,7 @@ export async function POST(request: NextRequest) {
         const planConfig = getPlanFromPriceId(priceId);
 
         if (!planConfig) {
-          console.error("Unknown priceId:", priceId);
-          break;
+          return await signalerTarifInconnu(supabaseAdmin, event, priceId, userId);
         }
 
         const period = getSubscriptionPeriod(subscription);
@@ -154,7 +274,12 @@ export async function POST(request: NextRequest) {
         // Récupérer le subscription ID depuis parent.subscription_details
         const subscriptionId =
           (invoice.parent?.subscription_details?.subscription as string) || null;
-        if (!subscriptionId) break;
+        if (!subscriptionId) {
+          console.error(
+            `⚠️ invoice.payment_succeeded sans abonnement rattaché — event ${event.id}, facture ${invoice.id}`
+          );
+          break;
+        }
 
         // Récupérer l'abonnement
         const subscriptionResponse = await stripe.subscriptions.retrieve(subscriptionId);
@@ -163,8 +288,15 @@ export async function POST(request: NextRequest) {
         const priceId = subscription.items.data[0]?.price.id;
         const planConfig = getPlanFromPriceId(priceId);
 
-        if (!userId || !planConfig) {
-          console.error("Missing data for invoice.payment_succeeded");
+        if (!planConfig) {
+          return await signalerTarifInconnu(supabaseAdmin, event, priceId, userId);
+        }
+
+        if (!userId) {
+          console.error(
+            `⚠️ invoice.payment_succeeded — abonnement ${subscriptionId} sans` +
+              ` metadata.supabase_user_id : aucun compte à créditer (event ${event.id})`
+          );
           break;
         }
 
@@ -213,7 +345,17 @@ export async function POST(request: NextRequest) {
         const priceId = subscription.items.data[0]?.price.id;
         const planConfig = getPlanFromPriceId(priceId);
 
-        if (!userId || !planConfig) break;
+        if (!planConfig) {
+          return await signalerTarifInconnu(supabaseAdmin, event, priceId, userId);
+        }
+
+        if (!userId) {
+          console.error(
+            `⚠️ customer.subscription.updated — abonnement ${subscription.id} sans` +
+              ` metadata.supabase_user_id : aucun compte à mettre à jour (event ${event.id})`
+          );
+          break;
+        }
 
         // Vérifier si c'est un changement de plan (pas juste un renouvellement)
         const previousAttributes = event.data
@@ -266,7 +408,13 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const userId = subscription.metadata?.supabase_user_id;
 
-        if (!userId) break;
+        if (!userId) {
+          console.error(
+            `⚠️ customer.subscription.deleted — abonnement ${subscription.id} sans` +
+              ` metadata.supabase_user_id : aucun compte à rétrograder (event ${event.id})`
+          );
+          break;
+        }
 
         // Rétrograder vers le plan "free" (0 crédits)
         await supabaseAdmin
@@ -291,13 +439,27 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        // Événement non géré — on l'ignore silencieusement
-        console.log(`Unhandled event type: ${event.type}`);
+        // Événement non géré. Il est acquitté (200) pour que Stripe cesse de le
+        // livrer, mais il est journalisé : c'est la seule trace permettant de
+        // repérer qu'un type d'événement souscrit dans le tableau de bord Stripe
+        // n'a pas de traitement côté application.
+        console.warn(
+          `⚠️ Événement Stripe non géré : ${event.type} (event ${event.id}, ` +
+            `émis le ${new Date(event.created * 1000).toISOString()}) — acquitté sans traitement`
+        );
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error("Webhook error:", error);
+
+    // Le traitement a échoué après la réclamation : on la relâche pour que le
+    // rejeu provoqué par ce 500 reprenne l'événement au lieu de le confondre
+    // avec un doublon.
+    if (evenementReclame) {
+      await libererEvenement(supabaseAdmin, evenementReclame);
+    }
+
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }

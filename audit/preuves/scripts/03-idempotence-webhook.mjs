@@ -50,6 +50,13 @@ const admin = clientAdmin();
 // --- État de départ : solde à zéro, journal vierge pour cette référence ---
 await admin.from("profiles").update({ credits: 0, plan: "starter" }).eq("id", user.id);
 await admin.from("credit_transactions").delete().eq("reference_id", ID_ABONNEMENT);
+
+// La table des événements traités survit aux exécutions : sans ce nettoyage, le
+// premier envoi serait vu comme un rejeu et le test conclurait à l'idempotence
+// sans jamais avoir observé une attribution. L'erreur est ignorée tant que la
+// table n'existe pas (état d'avant correctif).
+await admin.from("stripe_events").delete().eq("id", ID_EVENEMENT);
+
 log(`Compte A (${user.id}) remis à 0 crédit, plan « starter »`);
 
 // --- Construction de l'événement ---
@@ -134,6 +141,15 @@ log("");
 log(`Lignes dans credit_transactions pour cet abonnement : ${transactions.length}`);
 for (const [index, t] of transactions.entries()) {
   log(`  ${index + 1}. ${t.created_at} — ${t.amount >= 0 ? "+" : ""}${t.amount} — ${t.description}`);
+}
+
+// Sans attribution au premier envoi, il n'y a rien à dédupliquer : conclure à
+// l'idempotence serait un faux positif.
+if (transactions.length === 0) {
+  indetermine(
+    "le premier envoi n'a attribué aucun crédit — l'événement était déjà enregistré," +
+      " le tarif n'est pas reconnu, ou le traitement a échoué. Rien ne peut être conclu."
+  );
 }
 
 verdict(

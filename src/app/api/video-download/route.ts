@@ -50,6 +50,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // --- Contrôle de propriété (avant tout appel externe) ---
+    // La vidéo demandée doit appartenir à l'utilisateur authentifié.
+    // On utilise la clé service role pour ne pas dépendre des policies RLS,
+    // et on filtre explicitement sur user_id.
+    const supabaseAdmin = createClient<Database>(
+      supabaseUrl,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: generation, error: generationError } = await supabaseAdmin
+      .from("video_generations")
+      .select("id")
+      .eq("heygen_video_id", videoId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    // Ligne absente, appartenant à un tiers ou erreur de lecture : on refuse.
+    // Le message reste volontairement neutre pour ne pas révéler l'existence
+    // d'une vidéo appartenant à quelqu'un d'autre.
+    if (generationError || !generation) {
+      if (generationError) {
+        console.error("Ownership check error (video-download):", generationError);
+      }
+      return NextResponse.json(
+        { error: "Vidéo introuvable ou accès non autorisé." },
+        { status: 403 }
+      );
+    }
+
     // --- Appel à l'API HeyGen v3 pour obtenir les données fraîches ---
     const heygenResponse = await fetch(
       `${HEYGEN_BASE_URL}/v3/videos/${videoId}`,
@@ -81,11 +110,6 @@ export async function GET(request: NextRequest) {
 
     // --- Optionnel : Mettre à jour l'URL en base si elle a changé ---
     // (Cela permet d'avoir une URL valide pendant quelques heures de plus)
-    const supabaseAdmin = createClient<Database>(
-      supabaseUrl,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     await supabaseAdmin
       .from("video_generations")
       .update({

@@ -157,6 +157,11 @@ if (!appEnLigne || !secret) {
   log(`  réponse du webhook : HTTP ${reponse.status} ${texte}`);
   log(`  solde du compte A après traitement : ${credits} crédits`);
 
+  // Le défaut n'est pas l'absence de crédit — un tarif inconnu ne peut pas être
+  // crédité — mais le fait que l'événement soit acquitté comme s'il avait été
+  // traité. Un 200 est indistinguable d'un traitement nominal dans le tableau de
+  // bord Stripe : l'incident est invisible. Un autre 2xx (202) évite le rejeu en
+  // boucle tout en restant repérable.
   voletB = reponse.status === 200 && credits === 0;
   if (voletB) {
     log("  ⇒ Stripe considère l'événement comme traité ; l'abonné n'a rien reçu.");

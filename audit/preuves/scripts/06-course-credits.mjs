@@ -38,6 +38,10 @@ await admin.from("video_generations").delete().eq("user_id", user.id);
 log(`Compte A (${user.id}) : solde fixé à 1 crédit, historique vidéo vidé`);
 
 // --- Le correctif atomique est-il en place ? ---
+// consume_credit ne lève pas d'erreur SQL quand le solde est insuffisant : elle
+// renvoie un jsonb { success, reason, balance }. Un échec métier se lit donc
+// dans `data.success`, pas dans `error` — ne tester que `error` ferait passer
+// tous les appels pour des succès.
 const { error: erreurRpc } = await admin.rpc("consume_credit", {
   p_user_id: user.id,
   p_video_id: null,
@@ -56,13 +60,17 @@ const attendre = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Reproduit generate-video/route.ts:98-181 pour une requête. */
 async function genererUneVideo(numero) {
   if (rpcDisponible) {
-    const { error } = await admin.rpc("consume_credit", {
+    const { data, error } = await admin.rpc("consume_credit", {
       p_user_id: user.id,
       p_video_id: null,
     });
     if (error) return { numero, aboutie: false, motif: error.message };
+    if (!data?.success) {
+      return { numero, aboutie: false, motif: data?.reason ?? "refus sans motif" };
+    }
+    // Le crédit est débité avant l'appel au prestataire : la génération suit.
     await attendre(DUREE_APPEL_HEYGEN_MS);
-    return { numero, aboutie: true };
+    return { numero, aboutie: true, soldeLu: data.balance };
   }
 
   // 1. Lecture du solde

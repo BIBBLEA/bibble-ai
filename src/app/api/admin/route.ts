@@ -104,38 +104,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "userId et delta (+1/-1) requis." }, { status: 400 });
     }
 
-    // Get current credits
-    const { data: profile, error: fetchError } = await supabaseAdmin
-      .from("profiles")
-      .select("credits")
-      .eq("id", userId)
-      .single();
+    // Ajustement atomique : la RPC lit, écrit et journalise dans la même
+    // transaction, et borne le solde à 0 (004_credits_atomiques.sql).
+    const { data: grant, error: grantError } = await supabaseAdmin.rpc(
+      "grant_credits",
+      {
+        p_user_id: userId,
+        p_amount: delta,
+        p_mode: "add",
+        p_description: `Ajustement manuel par admin (${delta > 0 ? "+" : ""}${delta})`,
+        p_reference_id: null,
+      }
+    );
 
-    if (fetchError || !profile) {
-      return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    if (grantError) {
+      return NextResponse.json({ error: grantError.message }, { status: 500 });
     }
 
-    const newCredits = Math.max(0, profile.credits + delta);
-
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({ credits: newCredits })
-      .eq("id", userId);
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (!grant?.success) {
+      if (grant?.reason === "profile_not_found") {
+        return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Ajustement impossible." }, { status: 500 });
     }
 
-    // Log the transaction
-    await supabaseAdmin.from("credit_transactions").insert({
-      user_id: userId,
-      type: "manual_credit",
-      amount: delta,
-      balance_after: newCredits,
-      description: `Ajustement manuel par admin (${delta > 0 ? "+" : ""}${delta})`,
-    });
-
-    return NextResponse.json({ success: true, credits: newCredits });
+    return NextResponse.json({ success: true, credits: grant.balance });
   }
 
   return NextResponse.json({ error: "Action invalide." }, { status: 400 });

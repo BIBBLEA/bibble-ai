@@ -175,27 +175,35 @@ Recette close : les parcours e-mail sont validés.
 
 ## B1 — Crédits atomiques
 
-- [ ] **B1.1** Migration : fonction `consume_credit(p_user_id, p_video_id)` —
+- [x] **B1.1** Migration : fonction `consume_credit(p_user_id, p_video_id)` —
       `UPDATE profiles SET credits = credits - 1 WHERE id = p_user_id AND credits > 0 RETURNING credits`
       + insertion `credit_transactions` dans la même transaction
-- [ ] **B1.2** Migration : fonction `grant_credits(p_user_id, p_amount, p_mode 'reset'|'add',
+      → **fait** le 2026-08-04. `004_credits_atomiques.sql` — SECURITY DEFINER, EXECUTE réservé à `service_role`.
+- [x] **B1.2** Migration : fonction `grant_credits(p_user_id, p_amount, p_mode 'reset'|'add',
       p_description, p_reference_id)` pour le webhook et l'admin
-- [ ] **B1.3** `/api/generate-video` : remplacer le read-then-write (`route.ts:98-181`). Débiter
+      → **fait** le 2026-08-04. `004_credits_atomiques.sql`, modes `reset` et `add`, journalisation dans la même transaction.
+- [x] **B1.3** `/api/generate-video` : remplacer le read-then-write (`route.ts:98-181`). Débiter
       **avant** l'appel HeyGen et re-créditer si HeyGen échoue — aujourd'hui le solde est lu ligne 98,
       HeyGen répond plusieurs secondes plus tard, puis le solde est écrit : N requêtes parallèles avec
       1 crédit produisent N vidéos.
-- [ ] **B1.4** `src/lib/credits.ts` : réécrire `deductCredit`, `grantSubscriptionCredits`,
+      → **fait** le 2026-08-04. Débit via `consume_credit` avant l'appel HeyGen, remboursement sur échec. Preuve : `resultats/avant/06-…log` (5 vidéos, 1 crédit) puis `resultats/apres/06-…log` (1 vidéo, 4 refus).
+- [x] **B1.4** `src/lib/credits.ts` : réécrire `deductCredit`, `grantSubscriptionCredits`,
       `grantManualCredits` en appels RPC
-- [ ] **B1.5** `/api/admin` action `adjust_credits` : passer par la RPC
-- [ ] **B1.6** Test de concurrence : 5 requêtes simultanées avec 1 crédit → 1 seule vidéo
+      → **fait** le 2026-08-04. Les trois fonctions passent par les RPC, signatures inchangées.
+- [x] **B1.5** `/api/admin` action `adjust_credits` : passer par la RPC
+      → **fait** le 2026-08-04. `adjust_credits` passe par `grant_credits` en mode `add`.
+- [x] **B1.6** Test de concurrence : 5 requêtes simultanées avec 1 crédit → 1 seule vidéo
+      → **fait** le 2026-08-04. `06-course-credits.mjs` : 5 requêtes simultanées avec 1 crédit → 1 seule aboutit.
 
 ## B2 — Sécurisation des routes vidéo et API
 
-- [ ] **B2.1** `/api/video-download` : vérifier que `heygen_video_id` appartient à `user.id` **avant**
+- [x] **B2.1** `/api/video-download` : vérifier que `heygen_video_id` appartient à `user.id` **avant**
       d'appeler HeyGen et de renvoyer l'URL. Aujourd'hui le filtre `user_id` n'est appliqué qu'à la
       mise à jour en base (`route.ts:96`), pas à la réponse — tout compte authentifié peut récupérer
       la vidéo d'un autre.
-- [ ] **B2.2** `/api/video-status` : même contrôle de propriété (`route.ts:111-121`)
+      → **fait** le 2026-08-04. Contrôle de propriété avant tout appel au prestataire, refus 403 au message neutre.
+- [x] **B2.2** `/api/video-status` : même contrôle de propriété (`route.ts:111-121`)
+      → **fait** le 2026-08-04. Même contrôle, même formulation.
 - [ ] **B2.3** Ajouter `ADMIN_EMAIL` aux variables Vercel — absent aujourd'hui, le portail admin est
       donc inopérant en production (il échoue fermé). Mieux : remplacer la comparaison d'e-mail par un
       flag `is_admin` en base ou un custom claim JWT.
@@ -205,24 +213,30 @@ Recette close : les parcours e-mail sont validés.
 
 ## B3 — Webhook Stripe : idempotence et correctifs
 
-- [ ] **B3.1** Migration : table `stripe_events (id text primary key, type text, processed_at timestamptz default now())`
-- [ ] **B3.2** Webhook : insérer `event.id` en tête de traitement (`on conflict do nothing`) ; si la
+- [x] **B3.1** Migration : table `stripe_events (id text primary key, type text, processed_at timestamptz default now())`
+      → **fait** le 2026-08-04. `005_stripe_events.sql` — RLS activée, aucune policy : accès réservé au `service_role`.
+- [x] **B3.2** Webhook : insérer `event.id` en tête de traitement (`on conflict do nothing`) ; si la
       ligne existe déjà, répondre 200 sans retraiter. Sans cela, un rejeu Stripe (déclenché notamment
       par les réponses 500 du handler, `route.ts:302-308`) **re-crédite l'abonné au plein montant du
       plan** et duplique les `credit_transactions`.
-- [ ] **B3.3** Corriger `getSubscriptionPeriod` (`route.ts:43-46`) : `start` doit utiliser
+      → **fait** le 2026-08-04. `event.id` enregistré juste après la vérification de signature ; un renvoi est acquitté sans retraitement, et la réclamation est relâchée si le traitement échoue. Preuve : `resultats/avant/03-…log` (2 attributions) puis `resultats/apres/03-…log` (1 seule).
+- [x] **B3.3** Corriger `getSubscriptionPeriod` (`route.ts:43-46`) : `start` doit utiliser
       `current_period_start`, pas `current_period_end` — les deux bornes sont identiques aujourd'hui
-- [ ] **B3.4** Journaliser les événements non gérés plutôt que de les ignorer silencieusement
-- [ ] **B3.5** Durcir le mapping des Price IDs : `PLAN_CONFIG` (`route.ts:20-30`) et `PLAN_CREDITS`
+      → **fait** le 2026-08-04. `start` utilise `current_period_start`.
+- [x] **B3.4** Journaliser les événements non gérés plutôt que de les ignorer silencieusement
+      → **fait** le 2026-08-04. Les événements non gérés et les sorties silencieuses sont journalisés.
+- [x] **B3.5** Durcir le mapping des Price IDs : `PLAN_CONFIG` (`route.ts:20-30`) et `PLAN_CREDITS`
       (`src/lib/stripe.ts`) sont construits avec `process.env.X || ""`. Une variable manquante crée la
       clé `""` et plusieurs variables manquantes s'écrasent sur cette même clé, faussant le mapping
       sans bruit. Filtrer les clés vides à la construction, et rendre le `priceId` inconnu bruyant
       (`route.ts:97-100` fait aujourd'hui un `break` discret : le paiement est accepté, aucun crédit
       n'est attribué, aucune alerte).
-- [ ] **B3.6** Rejeu depuis la sandbox (Workbench → Send test events, ou `stripe trigger` via le CLI) :
+      → **fait** le 2026-08-04. Entrées vides écartées et variables manquantes signalées au chargement ; un tarif inconnu déclenche une alerte et une réponse 202, distincte du 200 nominal côté Stripe.
+- [x] **B3.6** Rejeu depuis la sandbox (Workbench → Send test events, ou `stripe trigger` via le CLI) :
       double envoi du même événement → un seul traitement ; vérifier les périodes en base
 
 ---
+      → **fait** le 2026-08-04. Rejeu joué en local, signature fabriquée sans compte Stripe.
 
 ## Ordre d'exécution
 

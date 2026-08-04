@@ -165,6 +165,26 @@ export type Database = {
         };
         Relationships: [];
       };
+      stripe_events: {
+        // Journal de déduplication des webhooks Stripe (migration 005).
+        // `id` est l'identifiant de l'événement Stripe (evt_…), pas un UUID.
+        Row: {
+          id: string;
+          type: string | null;
+          processed_at: string;
+        };
+        Insert: {
+          id: string;
+          type?: string | null;
+          processed_at?: string;
+        };
+        Update: {
+          id?: string;
+          type?: string | null;
+          processed_at?: string;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           id: string;
@@ -219,7 +239,36 @@ export type Database = {
       };
     };
     Views: {};
-    Functions: {};
+    Functions: {
+      // 004_credits_atomiques.sql — débit atomique d'un crédit
+      consume_credit: {
+        Args: {
+          p_user_id: string;
+          p_video_id?: string | null;
+        };
+        Returns: {
+          success: boolean;
+          reason: "ok" | "insufficient_credits" | "profile_not_found";
+          balance: number | null;
+        };
+      };
+      // 004_credits_atomiques.sql — attribution de crédits ('reset' ou 'add')
+      grant_credits: {
+        Args: {
+          p_user_id: string;
+          p_amount: number;
+          p_mode?: "reset" | "add";
+          p_description?: string | null;
+          p_reference_id?: string | null;
+        };
+        Returns: {
+          success: boolean;
+          reason: "ok" | "profile_not_found" | "invalid_mode";
+          balance: number | null;
+          previous_balance: number | null;
+        };
+      };
+    };
     Enums: {};
     CompositeTypes: {};
   };

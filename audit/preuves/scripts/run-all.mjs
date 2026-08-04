@@ -69,11 +69,24 @@ if (setup.code !== 0) {
 }
 console.log("00-setup : jeu de données prêt");
 
+/**
+ * Le verdict est lu dans la sortie, le code n'étant qu'une confirmation : sous
+ * Windows, un script peut afficher son verdict puis mourir sur une assertion
+ * libuv en refermant ses connexions, ce qui masquerait un résultat pourtant
+ * obtenu.
+ */
+function lireVerdict(sortie, code) {
+  if (sortie.includes("✅ BLOQUÉ")) return ETIQUETTES[0];
+  if (sortie.includes("❌ EXPLOITÉ")) return ETIQUETTES[1];
+  if (sortie.includes("⚠️  INDÉTERMINÉ")) return ETIQUETTES[2];
+  return ETIQUETTES[code] ?? `code ${code}`;
+}
+
 const resultats = [];
 for (const preuve of PREUVES) {
   const { code, sortie } = await executer(preuve.fichier);
   await writeFile(path.join(dossierSortie, preuve.fichier.replace(".mjs", ".log")), sortie);
-  const etiquette = ETIQUETTES[code] ?? `code ${code}`;
+  const etiquette = lireVerdict(sortie, code);
   console.log(`${preuve.fichier.padEnd(30)} ${etiquette}`);
   resultats.push({ ...preuve, code, etiquette });
 }

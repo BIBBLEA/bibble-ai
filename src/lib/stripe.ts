@@ -85,15 +85,52 @@ export const PLANS: PlanConfig[] = [
   },
 ];
 
+// ============================================
+// Table des tarifs : construction sûre
+// ============================================
+// Écrire `{ [process.env.X || ""]: valeur }` fabrique la clé "" dès qu'une
+// variable manque ; plusieurs variables absentes s'écrasent alors sur cette même
+// clé et seule la dernière déclarée subsiste. Le mapping perd des entrées sans
+// bruit, et un priceId vide devient un plan valide crédité au tarif du dernier
+// plan déclaré. On écarte donc les entrées dont le Price ID n'est pas renseigné,
+// et on le signale au chargement du module.
+//
+// Preuve : audit/preuves/scripts/05-mapping-price-ids.mjs
+
+export function construireTableTarifs<T>(
+  entrees: Array<{ variable: string; priceId: string | undefined; valeur: T }>,
+  libelle = "table des tarifs"
+): Record<string, T> {
+  const table: Record<string, T> = {};
+  const manquantes: string[] = [];
+
+  for (const { variable, priceId, valeur } of entrees) {
+    if (!priceId) {
+      manquantes.push(variable);
+      continue;
+    }
+    table[priceId] = valeur;
+  }
+
+  if (manquantes.length > 0) {
+    console.warn(
+      `⚠️ ${libelle} — Price IDs Stripe non renseignés (${manquantes.length}/${entrees.length}) : ` +
+        `${manquantes.join(", ")} — les abonnements souscrits sur ces tarifs ne seront pas crédités.`
+    );
+  }
+
+  return table;
+}
+
 // Mapping de tous les Price IDs vers les crédits
-export const PLAN_CREDITS: Record<string, number> = {
-  [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: 2,
-  [process.env.STRIPE_PRICE_STARTER_ANNUAL || ""]: 2,
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || ""]: 6,
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || ""]: 6,
-  [process.env.STRIPE_PRICE_PRO_MONTHLY || ""]: 15,
-  [process.env.STRIPE_PRICE_PRO_ANNUAL || ""]: 15,
-};
+export const PLAN_CREDITS: Record<string, number> = construireTableTarifs([
+  { variable: "STRIPE_PRICE_STARTER_MONTHLY", priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY, valeur: 2 },
+  { variable: "STRIPE_PRICE_STARTER_ANNUAL", priceId: process.env.STRIPE_PRICE_STARTER_ANNUAL, valeur: 2 },
+  { variable: "STRIPE_PRICE_GROWTH_MONTHLY", priceId: process.env.STRIPE_PRICE_GROWTH_MONTHLY, valeur: 6 },
+  { variable: "STRIPE_PRICE_GROWTH_ANNUAL", priceId: process.env.STRIPE_PRICE_GROWTH_ANNUAL, valeur: 6 },
+  { variable: "STRIPE_PRICE_PRO_MONTHLY", priceId: process.env.STRIPE_PRICE_PRO_MONTHLY, valeur: 15 },
+  { variable: "STRIPE_PRICE_PRO_ANNUAL", priceId: process.env.STRIPE_PRICE_PRO_ANNUAL, valeur: 15 },
+], "PLAN_CREDITS");
 
 // --- Helpers ---
 
@@ -102,6 +139,9 @@ export function getPlanBySlug(slug: string): PlanConfig | undefined {
 }
 
 export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
+  // Même piège que pour la table des tarifs : un Price ID vide correspondrait à
+  // tous les plans dont la variable d'environnement n'est pas renseignée.
+  if (!priceId) return undefined;
   return PLANS.find(
     (p) => p.monthlyPriceId === priceId || p.annualPriceId === priceId
   );
