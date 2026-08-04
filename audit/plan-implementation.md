@@ -169,11 +169,18 @@ Recette close : les parcours e-mail sont validés.
       implicites d'un projet hébergé sans jamais les déclarer, si bien qu'une base recréée depuis le
       dépôt n'avait aucun droit. Sans cet ordre — privilèges puis restrictions — le `REVOKE` de 003
       était annulé.
-- [ ] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
+- [x] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
       `profiles.credits` avec la somme des `credit_transactions`) — **nécessite un accès en lecture
       au projet hébergé**, non réalisable en local
       → requêtes prêtes dans `audit/preuves/b0-2-controle-soldes.sql` (lecture seule),
       à exécuter depuis l'éditeur SQL du projet hébergé.
+      → **fait** le 2026-08-04, voir [b0-2-constat.md](./preuves/b0-2-constat.md).
+      Trois comptes, **10 crédits** consommés sans attribution au journal. Aucune voie applicative
+      ne peut produire cet écart : toutes journalisent. Reste donc l'écriture directe, soit depuis
+      l'éditeur SQL, soit par la faille — les deux laissent la même trace. Les volumes faibles,
+      les soldes nuls et l'absence de plan usurpé orientent vers des attributions manuelles de mise
+      au point. **Une question tranche** : des crédits ont-ils été posés à la main pendant les essais ?
+      La requête 4 montre par ailleurs que la production porte **déjà** les restrictions de 003.
 
 ## B1 — Crédits atomiques
 
