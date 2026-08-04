@@ -28,7 +28,7 @@ SaaS de génération de vidéos avatar (Next.js + Supabase + HeyGen + Stripe), d
 |---|---|---|
 | 0 | **Escalade de crédits via RLS** : la policy `Users can update own profile` (`001_initial_schema.sql:186-188`) n'a **ni `WITH CHECK` ni restriction de colonnes** → tout utilisateur connecté peut s'attribuer des crédits illimités depuis la console du navigateur avec la clé anon | Base |
 | 1 | **Aucun flux « mot de passe oublié »** : code reverté (commits `baa348d`, `02649d9`, `a7e6962`), aucun lien sur `/login` | Code |
-| 2 | **Compte Stripe live non activé** : tout est en sandbox, aucun paiement réel possible | Stripe |
+| 2 | ~~Compte Stripe live non activé~~ — **résolu le 2026-08-04** (activation faite par la cliente). Restent les étapes techniques : tarifs live, webhook live, bascule des clés | Stripe |
 | 3 | **Crédits non atomiques** : lecture-puis-écriture partout (`generate-video`, `lib/credits.ts`, admin) → course : N requêtes parallèles avec 1 crédit = N vidéos | Code |
 | 4 | **Pas d'idempotence webhook** : un retry Stripe re-crédite au plein montant du plan | Code |
 | 5 | **IDOR vidéos** : `/api/video-download` et `/api/video-status` renvoient l'URL/statut de n'importe quelle vidéo à tout utilisateur authentifié (propriété non vérifiée) | Code |
@@ -78,7 +78,8 @@ Trois chantiers, par ordre d'urgence :
    confirmation, changement de mot de passe et d'e-mail, page « Mon compte », templates en français.
 3. **Crédits atomiques, IDOR et idempotence (BLOC B)** — les vulnérabilités de l'audit initial.
 
-Côté cliente, l'**activation du compte Stripe live** est le préalable administratif à tout
-lancement : à déclencher dès maintenant, la validation prend plusieurs jours.
+Côté cliente, l'**activation du compte Stripe live** — préalable administratif à tout lancement — a
+été réalisée le 2026-08-04 : le passage en production n'est plus bloqué par un délai externe.
 
-Le déroulé des travaux est dans [plan-implementation.md](./plan-implementation.md).
+Le déroulé des travaux est dans [plan-implementation.md](./plan-implementation.md) ; ce qui relève
+des accès et comptes tiers est regroupé dans [actions-cliente.md](./actions-cliente.md).

@@ -9,8 +9,16 @@
 |---|---|---|
 | Plan | Free — 3 000 e-mails transactionnels/mois (≈100/jour) | ⚠️ |
 | Domaine | `bibble-ai.com` — **Verified**, région `eu-west-1`, créé il y a ~13 jours | OK |
-| Clé API « SUPABASE » | Full access, créée il y a 13 j, **utilisée il y a ~13 h** (SMTP Supabase) | OK |
+| Clé API « SUPABASE » | Full access, créée il y a 14 j, **utilisée il y a 1 j** (SMTP Supabase) | OK |
 | Clé API « Vercel Integration » | Sending access, créée il y a 8 j, **aucune activité** | ⚠️ orpheline |
+| Intégration Vercel | **Connectée** (Settings → Integrations) — à l'origine de la clé ci-dessus et de la variable `RESEND_API_KEY` | ⚠️ |
+| Intégration Supabase | **Non connectée** — le SMTP a été configuré manuellement dans Supabase, ce qui fonctionne | OK |
+| Fournisseur DNS du domaine | **Infomaniak** (détecté par Resend) | — |
+| Enregistrements DNS | DKIM (`resend._domainkey`), MX + TXT SPF (`send`) — tous *Verified* ; **pas de DMARC** | ⚠️ |
+| TLS | **Opportunistic** (chiffrement tenté, non garanti) — le mode *Enforced* est disponible | ⚠️ |
+| Accès de l'équipe | `lealaref6@gmail.com` **Admin** · `sadoukasepsilon@gmail.com` (dév) **Member** | OK |
+| MFA | **Désactivée sur les deux comptes** | ⚠️ |
+| Facturation | Réservée aux administrateurs (« managed by your team's admins ») | — |
 
 ## Historique des envois (logs Resend, 15 derniers jours)
 
@@ -27,7 +35,12 @@
 ## Ce qu'il manque par rapport à l'objectif
 
 1. **Refaire les tests avec de vraies adresses e-mail** (Gmail, Outlook…) — jamais `@example.com`.
-2. **La clé `RESEND_API_KEY` sur Vercel (« Vercel Integration ») est orpheline** : plus aucun code ne l'utilise depuis les reverts du flux forgot-password. Soit la réutiliser dans le nouveau flux de reset, soit s'appuyer uniquement sur le SMTP Supabase (recommandé, un seul canal d'envoi) et la révoquer.
-3. **Délivrabilité** : vérifier dans la config DNS que SPF/DKIM sont bien posés (statut « Verified » l'indique) et ajouter un enregistrement **DMARC** s'il n'existe pas.
-4. **Plan Free (100 e-mails/jour)** : correct pour le lancement ; prévoir l'upgrade si volume d'inscriptions > ~50/jour (confirmation + reset + renvois).
-5. Nettoyer la **suppression list** si des adresses de test y sont entrées (bounces sur `example.com`).
+2. **La clé `RESEND_API_KEY` sur Vercel (« Vercel Integration ») est orpheline** : plus aucun code ne l'utilise depuis les reverts du flux forgot-password. Soit la réutiliser dans le nouveau flux de reset, soit s'appuyer uniquement sur le SMTP Supabase (recommandé, un seul canal d'envoi) et la révoquer — en **déconnectant aussi l'intégration Vercel**, faute de quoi la clé et la variable seront recréées.
+3. **Délivrabilité** : SPF et DKIM sont vérifiés (constaté dans l'onglet Records du domaine). Il manque un enregistrement **DMARC**, à créer chez Infomaniak.
+4. **Plan Free (100 e-mails/jour)** : correct pour le lancement ; prévoir l'upgrade si volume d'inscriptions > ~50/jour (confirmation + reset + renvois). L'upgrade passe par un administrateur de l'équipe.
+5. **Sécurité du compte** : activer la MFA sur les deux comptes. Ce compte peut envoyer au nom de `bibble-ai.com` ; sa compromission permettrait d'usurper la marque.
+6. **TLS opportuniste** : envisager le passage en *Enforced* pour garantir le chiffrement des messages en transit (à valider — de rares serveurs de réception mal configurés refusent alors les e-mails).
+
+> Précision : il n'y a **pas de « suppression list » à purger** dans ce compte. Les échecs sur
+> `vous@example.com` sont des refus de validation à l'envoi (422), pas des bounces — aucune adresse
+> n'a donc été blacklistée.

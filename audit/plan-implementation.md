@@ -116,7 +116,9 @@ password » — visibles dans les logs Resend).
       domaine de production et ajouter une redirection `bibble-ai.com` → `www.bibble-ai.com`
 - [ ] **A6.4** Trancher le sort de `RESEND_API_KEY` : plus aucun code ne l'utilise depuis les reverts.
       Si l'on s'en tient au SMTP Supabase (recommandé — un seul canal d'envoi), révoquer la clé
-      « Vercel Integration » et retirer la variable
+      « Vercel Integration » **et déconnecter l'intégration Vercel** dans Resend (Settings →
+      Integrations → *Revoke access*) : c'est elle qui a créé la clé et poussé la variable, la
+      supprimer seule la ferait réapparaître. Faisable avec notre accès Resend (rôle Member).
 - [ ] **A6.5** Vérifier la présence d'un enregistrement DNS **DMARC** pour `bibble-ai.com` (SPF/DKIM
       sont validés par le statut « Verified » de Resend)
 
@@ -133,8 +135,9 @@ password » — visibles dans les logs Resend).
       moins de 60 s
 - [ ] **A7.7** Contrôler la délivrabilité (pas de classement en spam) et l'absence de nouvelles
       erreurs dans les logs Resend
-- [ ] **A7.8** Nettoyer les comptes de test non confirmés dans Supabase et purger la suppression list
-      Resend des adresses `example.com`
+- [ ] **A7.8** Nettoyer les comptes de test non confirmés dans Supabase (côté Resend, rien à purger :
+      les envois vers `example.com` ont été refusés à la validation, aucune adresse n'a été
+      blacklistée)
 
 ---
 
@@ -198,9 +201,9 @@ password » — visibles dans les logs Resend).
 
 ## B4 — Passage en production Stripe (dépend de la cliente)
 
-- [ ] **B4.1** 🔑 **Cliente** : activer le compte Stripe live `acct_1Tr0lOF37MrM9Z0l` (informations
-      société, identité, IBAN). Aujourd'hui seul le mode sandbox est accessible — **aucun paiement
-      réel n'est possible**. À lancer dès maintenant, la validation Stripe prend plusieurs jours.
+- [x] **B4.1** ✅ **Cliente** : activation du compte Stripe live `acct_1Tr0lOF37MrM9Z0l` — **faite**
+      (confirmée le 2026-08-04). Les étapes B4.2 à B4.6 sont donc débloquées ; il me faut un accès au
+      dashboard en mode live (ou, a minima, le secret `whsec_` du webhook de production).
 - [ ] **B4.2** Recréer les 3 produits × 2 périodicités en mode live et récupérer les 6 price IDs
 - [ ] **B4.3** Mettre à jour les 12 variables `*STRIPE_PRICE_*` sur Vercel (Production)
 - [ ] **B4.4** Créer le webhook live vers `https://www.bibble-ai.com/api/webhooks/stripe` avec les 4
@@ -221,11 +224,12 @@ BLOC A (e-mails)          ─── indépendant, prioritaire ──────
                                                                       ├── PR vers main
 BLOC B  B0 (faille RLS)   ─── à traiter immédiatement ────────────────┤
         B1 → B2 → B3      ─── testables en sandbox ──────────────────┤
-        B4                ─── bloqué par l'activation du compte live ─┘
-                              (action cliente à déclencher dès maintenant)
+        B4                ─── débloqué (compte live activé) ─────────┘
+                              nécessite un accès Stripe en mode live
 ```
 
-**À demander à la cliente sans attendre** : lancer l'activation du compte Stripe live (B4.1), le
-délai de validation conditionne toute la mise en production.
+**À demander à la cliente** : les accès et actions administratives sont regroupés dans
+[actions-cliente.md](./actions-cliente.md). L'activation du compte Stripe live (B4.1) est faite ;
+le point ouvert est désormais l'accès au dashboard live pour créer tarifs et webhook.
 
 Chaque section donne lieu à un ou plusieurs commits sur `fix-stripe-resend`.
