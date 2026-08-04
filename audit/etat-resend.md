@@ -17,7 +17,6 @@
 | Enregistrements DNS | DKIM (`resend._domainkey`), MX + TXT SPF (`send`) — tous *Verified* | OK |
 | DMARC (`_dmarc.bibble-ai.com`) | `v=DMARC1; p=reject;` | OK |
 | Accès de l'équipe | `lealaref6@gmail.com` **Admin** · `sadoukasepsilon@gmail.com` (dév) **Member** | OK |
-| MFA | **Désactivée sur les deux comptes** | ⚠️ |
 | Facturation | Réservée aux administrateurs (« managed by your team's admins ») | — |
 
 ## Historique des envois (logs Resend, 15 derniers jours)
@@ -38,7 +37,6 @@
 2. **La clé `RESEND_API_KEY` sur Vercel (« Vercel Integration ») est orpheline** : plus aucun code ne l'utilise depuis les reverts du flux forgot-password. Soit la réutiliser dans le nouveau flux de reset, soit s'appuyer uniquement sur le SMTP Supabase (recommandé, un seul canal d'envoi) et la révoquer — en **déconnectant aussi l'intégration Vercel**, faute de quoi la clé et la variable seront recréées.
 3. **Délivrabilité** : rien à corriger. SPF, DKIM et DMARC sont tous en place (vérification DNS directe du 2026-08-04 : `_dmarc.bibble-ai.com` renvoie `v=DMARC1; p=reject;`).
 4. **Plan Free (100 e-mails/jour)** : correct pour le lancement ; prévoir l'upgrade si volume d'inscriptions > ~50/jour (confirmation + reset + renvois). L'upgrade passe par un administrateur de l'équipe.
-5. **Sécurité du compte** : activer la MFA sur les deux comptes. Ce compte peut envoyer au nom de `bibble-ai.com` ; sa compromission permettrait d'usurper la marque.
 
 > Précision : il n'y a **pas de « suppression list » à purger** dans ce compte. Les échecs sur
 > `vous@example.com` sont des refus de validation à l'envoi (422), pas des bounces — aucune adresse

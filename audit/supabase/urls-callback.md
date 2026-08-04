@@ -54,7 +54,7 @@ Dashboard : projet `bibble-ai` → Settings → Environment Variables
 | `ADMIN_EMAIL` | Production | l'adresse administratrice | **absente** — sans elle, le portail admin est inaccessible en production |
 | `NEXT_PUBLIC_APP_URL` | Production | `https://www.bibble-ai.com` | à vérifier |
 | `NEXT_PUBLIC_APP_URL` | Preview | `https://bibble-ai-kappa.vercel.app` | à vérifier |
-| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md §2](../actions-cliente.md#2-resend--ménage-et-sécurité-du-compte-)) |
+| `RESEND_API_KEY` | toutes | — | à supprimer (voir [actions-cliente.md §2](../actions-cliente.md#2-resend--clé-api-orpheline-)) |
 
 ⚠️ Sans valeur, `NEXT_PUBLIC_APP_URL` retombe sur `http://localhost:3000` : les clients seraient
 renvoyés vers une adresse locale après un paiement.

@@ -41,14 +41,12 @@ les paramètres d'organisation, le transfert de projet et l'ajout de propriétai
 
 ---
 
-## 2. Resend — ménage et sécurité du compte 🤝
+## 2. Resend — clé API orpheline 🤝
 
 **Où** : `https://resend.com` (équipe `lealaref6`)
 
 - [ ] Donner l'accord pour révoquer la clé API « Vercel Integration » (créée il y a 8 jours, jamais
       utilisée) et déconnecter l'intégration Vercel qui l'a créée
-- [ ] Activer la **double authentification (MFA)** — absente sur les deux comptes de l'équipe,
-      activable uniquement depuis chaque compte
 
 > ⚠️ La clé « SUPABASE » fait fonctionner tous les e-mails du site : ne pas y toucher.
 >

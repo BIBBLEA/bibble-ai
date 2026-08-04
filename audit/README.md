@@ -20,6 +20,6 @@ interfaces d'administration) est regroupé ici :
 
 | Document | Contenu |
 |---|---|
-| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions de configuration** (accès administratifs, comptes tiers) — templates e-mail, ménage et sécurité Resend, variables Vercel, offre Supabase |
+| [actions-cliente.md](./actions-cliente.md) | **Checklist des actions de configuration** (accès administratifs, comptes tiers) — templates e-mail, clé Resend orpheline, variables Vercel, offre Supabase |
 | [urls-callback.md](./supabase/urls-callback.md) | **Toutes les URLs à configurer** : Redirect URLs Supabase, webhooks Stripe, variables Vercel, DNS |
 | [email-templates/](./supabase/email-templates/README.md) | **6 modèles d'e-mails HTML en français** aux couleurs du site, à coller dans les templates Supabase (+ mode d'emploi) |
