@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
 // ============================================
 // GET /api/video-download?video_id=xxx
@@ -39,6 +40,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // --- Limitation de débit ---
+    // Route en GET mais mutante : elle réécrit `video_url` et
+    // `thumbnail_url` en base après un appel à HeyGen. Même quota que
+    // /api/video-status, dont elle partage le rythme d'appel.
+    const limite = await appliquerQuota("suivi_video", cleUtilisateur(user.id));
+    if (limite) return limite;
+
     // --- Récupérer le video_id depuis les query params ---
     const { searchParams } = new URL(request.url);
     const videoId = searchParams.get("video_id");
@@ -47,6 +55,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Le paramètre video_id est requis." },
         { status: 400 }
+      );
+    }
+
+    // --- Contrôle de propriété (avant tout appel externe) ---
+    // La vidéo demandée doit appartenir à l'utilisateur authentifié.
+    // On utilise la clé service role pour ne pas dépendre des policies RLS,
+    // et on filtre explicitement sur user_id.
+    const supabaseAdmin = createClient<Database>(
+      supabaseUrl,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: generation, error: generationError } = await supabaseAdmin
+      .from("video_generations")
+      .select("id")
+      .eq("heygen_video_id", videoId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    // Ligne absente, appartenant à un tiers ou erreur de lecture : on refuse.
+    // Le message reste volontairement neutre pour ne pas révéler l'existence
+    // d'une vidéo appartenant à quelqu'un d'autre.
+    if (generationError || !generation) {
+      if (generationError) {
+        console.error("Ownership check error (video-download):", generationError);
+      }
+      return NextResponse.json(
+        { error: "Vidéo introuvable ou accès non autorisé." },
+        { status: 403 }
       );
     }
 
@@ -81,11 +118,6 @@ export async function GET(request: NextRequest) {
 
     // --- Optionnel : Mettre à jour l'URL en base si elle a changé ---
     // (Cela permet d'avoir une URL valide pendant quelques heures de plus)
-    const supabaseAdmin = createClient<Database>(
-      supabaseUrl,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     await supabaseAdmin
       .from("video_generations")
       .update({

@@ -1,0 +1,26 @@
+
+==============================================================================
+05 — Mapping des Price IDs : effondrement silencieux et paiement sans crédit
+==============================================================================
+[2026-08-04 21:25:38Z] Volet A — mapping construit avec 3 variables sur 6 renseignées
+[2026-08-04 21:25:38Z] 
+⚠️ PLAN_CREDITS — Price IDs Stripe non renseignés (3/6) : STRIPE_PRICE_STARTER_ANNUAL, STRIPE_PRICE_GROWTH_ANNUAL, STRIPE_PRICE_PRO_ANNUAL — les abonnements souscrits sur ces tarifs ne seront pas crédités.
+[2026-08-04 21:25:38Z] Module src/lib/stripe.ts chargé directement.
+[2026-08-04 21:25:38Z] 
+[2026-08-04 21:25:38Z] Mapping obtenu :
+[2026-08-04 21:25:38Z]   price_starter_mensuel      → 2 crédits
+[2026-08-04 21:25:38Z]   price_growth_mensuel       → 6 crédits
+[2026-08-04 21:25:38Z]   price_pro_mensuel          → 15 crédits
+[2026-08-04 21:25:38Z] 
+[2026-08-04 21:25:38Z] Entrées attendues : 6 — entrées réelles : 3
+
+[2026-08-04 21:25:38Z] Volet B — webhook appelé avec un priceId inconnu
+(node:31216) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/Freelance_Dev/bibble-ai/src/lib/stripe.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to D:\Codex\Freelance_Dev\bibble-ai\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[2026-08-04 21:25:38Z]   priceId envoyé : price_absent_des_variables_denvironnement
+[2026-08-04 21:25:38Z]   réponse du webhook : HTTP 202 {"received":true,"processed":false,"reason":"unknown_price_id","price_id":"price_absent_des_variables_denvironnement","event_id":"evt_preuve_price_inconnu"}
+[2026-08-04 21:25:38Z]   solde du compte A après traitement : 0 crédits
+
+✅ BLOQUÉ — les clés vides sont filtrées et un priceId inconnu est signalé

@@ -1,0 +1,19 @@
+
+==============================================================================
+00 — Préparation du jeu de données de preuve
+==============================================================================
+[2026-08-04 21:25:25Z] Cible Supabase : http://127.0.0.1:54321
+[2026-08-04 21:25:26Z] compte A (attaquant) — ancien compte supprimé (00b786ff-dec4-41be-8bc2-fb629a94cdc2)
+[2026-08-04 21:25:26Z] compte A (attaquant) — créé : 4fae919b-2cf1-4076-a5b5-ac0f9987ee90
+[2026-08-04 21:25:26Z]   → solde initialisé à 2 crédits, plan « starter »
+[2026-08-04 21:25:26Z]   → vidéo « heygen_video_appartenant_a_A » créée
+[2026-08-04 21:25:26Z] compte B (victime) — ancien compte supprimé (690bb096-4453-4b54-9154-d20a2bebf6af)
+[2026-08-04 21:25:27Z] compte B (victime) — créé : 6355e126-10d9-4987-a4d3-4895eaf94323
+[2026-08-04 21:25:27Z]   → solde initialisé à 2 crédits, plan « starter »
+[2026-08-04 21:25:27Z]   → vidéo « heygen_video_appartenant_a_B » créée
+
+[2026-08-04 21:25:27Z] Environnement prêt :
+[2026-08-04 21:25:27Z]   A (attaquant) : preuve-a@bibble-preuves.test — 4fae919b-2cf1-4076-a5b5-ac0f9987ee90
+[2026-08-04 21:25:27Z]   B (victime)   : preuve-b@bibble-preuves.test — 6355e126-10d9-4987-a4d3-4895eaf94323
+
+Identifiants écrits dans audit/preuves/scripts/.comptes.json

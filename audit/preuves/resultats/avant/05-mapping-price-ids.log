@@ -1,0 +1,33 @@
+
+==============================================================================
+05 — Mapping des Price IDs : effondrement silencieux et paiement sans crédit
+==============================================================================
+[2026-08-04 18:30:19Z] Volet A — mapping construit avec 3 variables sur 6 renseignées
+[2026-08-04 18:30:19Z] 
+[2026-08-04 18:30:20Z] Module src/lib/stripe.ts chargé directement.
+[2026-08-04 18:30:20Z] 
+[2026-08-04 18:30:20Z] Mapping obtenu :
+[2026-08-04 18:30:20Z]   price_starter_mensuel      → 2 crédits
+[2026-08-04 18:30:20Z]   "" (clé vide)              → 15 crédits
+[2026-08-04 18:30:20Z]   price_growth_mensuel       → 6 crédits
+[2026-08-04 18:30:20Z]   price_pro_mensuel          → 15 crédits
+[2026-08-04 18:30:20Z] 
+[2026-08-04 18:30:20Z] Entrées attendues : 6 — entrées réelles : 4
+[2026-08-04 18:30:20Z] La clé vide "" existe et vaut 15 crédits : les trois variables
+[2026-08-04 18:30:20Z] absentes se sont écrasées les unes les autres sur cette même clé, seule la
+[2026-08-04 18:30:20Z] dernière déclarée subsiste.
+[2026-08-04 18:30:20Z] Conséquences : un priceId vide ou absent est reconnu comme un plan valide, et
+[2026-08-04 18:30:20Z] le nombre de crédits qu'il attribue (15) est celui du dernier plan déclaré,
+[2026-08-04 18:30:20Z] sans rapport avec le plan réellement souscrit.
+
+[2026-08-04 18:30:20Z] Volet B — webhook appelé avec un priceId inconnu
+(node:16564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Codex/Freelance_Dev/bibble-ai/src/lib/stripe.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to D:\Codex\Freelance_Dev\bibble-ai\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[2026-08-04 18:30:20Z]   priceId envoyé : price_absent_des_variables_denvironnement
+[2026-08-04 18:30:20Z]   réponse du webhook : HTTP 200 {"received":true}
+[2026-08-04 18:30:20Z]   solde du compte A après traitement : 0 crédits
+[2026-08-04 18:30:20Z]   ⇒ Stripe considère l'événement comme traité ; l'abonné n'a rien reçu.
+
+❌ EXPLOITÉ — le mapping s'effondre sur la clé vide dès qu'une variable manque ; un priceId inconnu obtient un 200 sans qu'aucun crédit ne soit attribué ni aucune alerte levée

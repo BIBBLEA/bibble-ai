@@ -1,0 +1,22 @@
+
+==============================================================================
+04 — Période d'abonnement : `current_period_start` reçoit la date de fin
+==============================================================================
+[2026-08-04 21:25:37Z] Code extrait de src/app/api/webhooks/stripe/route.ts :
+
+      const item = subscription.items.data[0];
+      if (!item) return { start: null, end: null };
+      return {
+        start: new Date(item.current_period_start * 1000).toISOString(),
+        end: new Date(item.current_period_end * 1000).toISOString(),
+      };
+
+[2026-08-04 21:25:37Z] Abonnement fourni en entrée :
+[2026-08-04 21:25:37Z]   current_period_start = 2026-08-01T00:00:00.000Z
+[2026-08-04 21:25:37Z]   current_period_end   = 2026-09-01T00:00:00.000Z
+[2026-08-04 21:25:37Z] 
+[2026-08-04 21:25:37Z] Résultat renvoyé par la fonction :
+[2026-08-04 21:25:37Z]   start = 2026-08-01T00:00:00.000Z
+[2026-08-04 21:25:37Z]   end   = 2026-09-01T00:00:00.000Z
+
+✅ BLOQUÉ — la fonction renvoie bien la date de début et la date de fin distinctes

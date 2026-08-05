@@ -1,0 +1,5 @@
+# Variables locales (contiennent les clés de la pile Supabase locale)
+.env.preuves
+
+# Identifiants des comptes de test régénérés à chaque exécution de 00-setup.mjs
+scripts/.comptes.json

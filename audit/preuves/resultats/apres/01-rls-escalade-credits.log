@@ -1,0 +1,16 @@
+
+==============================================================================
+01 — Escalade de crédits via la policy RLS « Users can update own profile »
+==============================================================================
+[2026-08-04 21:25:28Z] Connecté en tant que preuve-a@bibble-preuves.test (4fae919b-2cf1-4076-a5b5-ac0f9987ee90)
+[2026-08-04 21:25:28Z] Solde et plan avant l'attaque : 2 crédits, plan « starter »
+[2026-08-04 21:25:28Z] 
+[2026-08-04 21:25:28Z] Requête envoyée avec la clé anon et le jeton de l'utilisateur :
+[2026-08-04 21:25:28Z]   supabase.from("profiles").update({ credits: 9999, plan: "pro" })
+[2026-08-04 21:25:28Z]                            .eq("id", "4fae919b-2cf1-4076-a5b5-ac0f9987ee90")
+[2026-08-04 21:25:28Z] Réponse : refus de PostgREST — 42501 permission denied for table profiles
+[2026-08-04 21:25:28Z] Solde et plan après l'attaque : 2 crédits, plan « starter »
+[2026-08-04 21:25:28Z] 
+[2026-08-04 21:25:28Z] Non-régression : la modification de full_name reste possible
+
+✅ BLOQUÉ — la modification de `credits` et `plan` par l'utilisateur est refusée par la base

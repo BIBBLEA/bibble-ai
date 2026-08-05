@@ -1,0 +1,18 @@
+
+==============================================================================
+03 — Rejeu d'un événement Stripe : double attribution de crédits
+==============================================================================
+[2026-08-04 18:30:19Z] Compte A (a7e35360-6c91-4b2c-b283-d193eef9c57f) remis à 0 crédit, plan « starter »
+[2026-08-04 18:30:19Z] Événement forgé : customer.subscription.updated — id evt_preuve_rejeu_idempotence
+[2026-08-04 18:30:19Z] Signature calculée localement (aucun appel réseau vers Stripe)
+[2026-08-04 18:30:19Z] 
+[2026-08-04 18:30:19Z] Envoi n°1 → HTTP 200 {"received":true}
+[2026-08-04 18:30:19Z]   solde après le 1er envoi : 6 crédits
+[2026-08-04 18:30:19Z] Envoi n°2 → HTTP 200 {"received":true}
+[2026-08-04 18:30:19Z]   solde après le 2e envoi (même événement) : 6 crédits
+[2026-08-04 18:30:19Z] 
+[2026-08-04 18:30:19Z] Lignes dans credit_transactions pour cet abonnement : 2
+[2026-08-04 18:30:19Z]   1. 2026-08-04T18:30:19.166841+00:00 — +6 — Changement de plan → growth — 6 crédits
+[2026-08-04 18:30:19Z]   2. 2026-08-04T18:30:19.218814+00:00 — +6 — Changement de plan → growth — 6 crédits
+
+❌ EXPLOITÉ — le même événement rejoué a produit 2 attributions de crédits au lieu d'une seule — un rejeu Stripe recrédite un abonné indéfiniment

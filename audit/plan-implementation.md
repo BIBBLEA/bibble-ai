@@ -6,7 +6,11 @@
 Le plan est organisé en **deux blocs indépendants** :
 
 - **[BLOC A — Resend / E-mails & Authentification](#bloc-a--resend--e-mails--authentification)** : rendre tous les parcours e-mail fonctionnels de bout en bout (priorité de la mission)
-- **[BLOC B — Stripe / Paiements & Crédits](#bloc-b--stripe--paiements--crédits)** : sécurité des crédits, idempotence des webhooks, passage en production
+- **[BLOC B — Stripe / Paiements & Crédits](#bloc-b--stripe--paiements--crédits)** : sécurité des crédits, idempotence des webhooks
+
+> **Périmètre** : les deux blocs sont des correctifs applicatifs, recettés en local et en sandbox
+> Stripe. La bascule du compte Stripe en mode live (tarifs, webhook et clés de production) relève de
+> l'administration du compte et sort du périmètre de ce plan.
 
 ---
 
@@ -27,8 +31,9 @@ et il comporte des défauts.
 | Changement d'adresse e-mail | 🔴 Absent | ✅ Section « Mon compte » + double confirmation |
 | Page « Mon compte » | 🔴 Absente — aucune page profil dans l'app | ✅ `/dashboard/account`, avec suppression de compte |
 
-Reste à faire côté configuration : coller les modèles d'e-mails dans Supabase (A5.1 à A5.4, A5.6),
-vérifier les variables Vercel (A6) et dérouler la recette (A7).
+Branche fusionnée dans `main` et déployée. Les modèles d'e-mails sont collés dans Supabase et les
+parcours inscription, mot de passe oublié et changement d'adresse ont été validés en conditions
+réelles. Reste : les variables d'environnement Vercel (A6) et les notifications de sécurité (A5.6).
 
 ## A1 — Corriger le parcours d'inscription existant
 
@@ -95,14 +100,14 @@ vérifier les variables Vercel (A6) et dérouler la recette (A7).
 
 ## A5 — Templates d'e-mails Supabase
 
-Actuellement les templates par défaut, **en anglais** (« Confirm your email address », « Reset your
-password » — visibles dans les logs Resend).
+Les six modèles français sont écrits, collés dans Supabase et vérifiés en conditions réelles.
 
-- [ ] **A5.1** Traduire et brander **Confirm sign up** (français, couleurs Bibble AI, ton de la marque)
-- [ ] **A5.2** Traduire et brander **Reset password**
-- [ ] **A5.3** Traduire et brander **Change email address**
-- [ ] **A5.4** Traduire **Magic link** et **Reauthentication** (non utilisés aujourd'hui, mais évite
-      un e-mail anglais surprise si activés plus tard)
+- [x] **A5.1** ~~Traduire et brander **Confirm sign up**~~ — collé et testé : e-mail reçu, lien de
+      confirmation fonctionnel
+- [x] **A5.2** ~~Traduire et brander **Reset password**~~ — collé et testé de bout en bout
+- [x] **A5.3** ~~Traduire et brander **Change email address**~~ — collé et testé (double confirmation)
+- [x] **A5.4** ~~Traduire **Magic link** et **Reauthentication**~~ — collés. Non utilisés aujourd'hui :
+      ils évitent un e-mail anglais surprise si ces parcours sont activés plus tard.
 - [x] **A5.5** ~~Si A1.3 option (a) est retenue : adapter les templates au format `token_hash`
       (`{{ .TokenHash }}`) au lieu de `{{ .ConfirmationURL }}`~~ — fait le 2026-08-04 : les 5 modèles
       à lien pointent sur `{{ .SiteURL }}/api/auth/callback?token_hash={{ .TokenHash }}&type=…`
@@ -111,43 +116,39 @@ password » — visibles dans les logs Resend).
       d'adresse porte **deux** liens (`{{ .TokenHash }}` et `{{ .TokenHashNew }}`) : *Secure email
       change* étant actif, le même message part vers l'ancienne et la nouvelle adresse et le
       changement n'aboutit qu'une fois les deux ouverts.
-- [ ] **A5.6** Activer et traduire les notifications de sécurité « Password changed » et
-      « Email address changed » (actuellement désactivées)
 
 ## A6 — URLs de callback et variables d'environnement
 
-- [ ] **A6.1** Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production) = `https://www.bibble-ai.com` —
-      c'est cette valeur qui construit les `redirectTo`
+- [x] **A6.1** ~~Vérifier `NEXT_PUBLIC_APP_URL` sur Vercel (Production)~~ — fait le 2026-08-04, ainsi
+      que `SUPABASE_SERVICE_ROLE_KEY` (suppression de compte) et l'ajout de `ADMIN_EMAIL` =
+      `lealaref6@gmail.com`, qui rend le portail d'administration de nouveau utilisable. Projet
+      redéployé, les variables n'étant lues qu'au build.
 - [x] **A6.2** ~~Ajouter `https://www.bibble-ai.com/auth/update-password` et `/api/auth/callback` aux
       Redirect URLs Supabase~~ — fait le 2026-08-04 : les deux entrées sont enregistrées (5 URLs au
       total). Le wildcard `/**` les couvrait déjà, l'ajout documente l'intention.
-- [ ] **A6.3** Domaine canonique : `www.bibble-ai.com`. La redirection depuis l'apex est déjà en
-      place (308, vérifiée le 2026-08-04). Reste à uniformiser le webhook Stripe, qui vise encore
-      `bibble-ai-kappa.vercel.app` en test — le webhook live devra pointer sur le domaine de prod.
-- [ ] **A6.4** Trancher le sort de `RESEND_API_KEY` : plus aucun code ne l'utilise depuis les reverts.
-      Si l'on s'en tient au SMTP Supabase (recommandé — un seul canal d'envoi), révoquer la clé
-      « Vercel Integration » **et déconnecter l'intégration Vercel** dans Resend (Settings →
-      Integrations → *Revoke access*) : c'est elle qui a créé la clé et poussé la variable, la
-      supprimer seule la ferait réapparaître. Faisable avec notre accès Resend (rôle Member).
+- [x] **A6.3** ~~Domaine canonique : `www.bibble-ai.com`~~ — la redirection depuis l'apex est déjà en
+      place (308, vérifiée le 2026-08-04). Le webhook Stripe de sandbox vise `bibble-ai-kappa.vercel.app`,
+      ce qui est normal pour l'environnement de test.
+- [x] **A6.4** ~~Trancher le sort de `RESEND_API_KEY`~~ — tranché : on s'en tient au SMTP Supabase,
+      un seul canal d'envoi. La variable est supprimée de Vercel (2026-08-04).
+      **Reste à faire côté Resend** : révoquer la clé « Vercel Integration » **et déconnecter
+      l'intégration Vercel** (Settings → Integrations → *Revoke access*). C'est elle qui a créé la
+      clé et poussé la variable — sans cette étape, les deux réapparaîtront au prochain déploiement.
 - [x] **A6.5** ~~Vérifier la présence d'un enregistrement DNS **DMARC**~~ — vérifié le 2026-08-04 :
       `_dmarc.bibble-ai.com` = `v=DMARC1; p=reject;`. SPF, DKIM et DMARC sont en place, rien à faire.
 
 ## A7 — Recette e-mails
 
-- [ ] **A7.1** Inscription complète avec une **vraie adresse Gmail** : réception → confirmation →
-      accès au dashboard
-- [ ] **A7.2** Même parcours avec **Outlook** (délivrabilité différente)
-- [ ] **A7.3** Parcours PKCE cross-navigateur : s'inscrire sur un navigateur, ouvrir le lien sur un
-      autre — doit fonctionner ou afficher un message clair
-- [ ] **A7.4** Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion
-- [ ] **A7.5** Renvoi de confirmation, changement de mot de passe connecté, changement d'e-mail
-- [ ] **A7.6** Cas d'erreur : lien expiré, lien déjà utilisé, e-mail inexistant, double demande en
-      moins de 60 s
-- [ ] **A7.7** Contrôler la délivrabilité (pas de classement en spam) et l'absence de nouvelles
-      erreurs dans les logs Resend
-- [ ] **A7.8** Nettoyer les comptes de test non confirmés dans Supabase (côté Resend, rien à purger :
-      les envois vers `example.com` ont été refusés à la validation, aucune adresse n'a été
-      blacklistée)
+- [x] **A7.1** ~~Inscription complète avec une **vraie adresse Gmail**~~ — testé : réception →
+      confirmation → accès au tableau de bord
+- [x] **A7.2** ~~Mot de passe oublié : demande → e-mail → nouveau mot de passe → connexion~~ — testé
+- [x] **A7.3** ~~Changement d'adresse e-mail~~ — testé
+- [x] **A7.4** ~~Cas d'erreur~~ — vérifié en production sur les redirections du callback : absence de
+      paramètre, jeton invalide selon les cinq types, `type` inconnu, code PKCE invalide, tentative
+      de redirection hors domaine (`next=//evil.example`). Réponse neutre et verrou de 60 s confirmés
+      sur le formulaire de mot de passe oublié.
+
+Recette close : les parcours e-mail sont validés.
 
 ---
 
@@ -155,77 +156,102 @@ password » — visibles dans les logs Resend).
 
 ## B0 — 🔴 Faille critique à corriger en priorité
 
-- [ ] **B0.1** **La policy RLS `Users can update own profile` (`001_initial_schema.sql:186-188`) n'a
-      pas de clause `WITH CHECK` ni de restriction de colonnes.** Un utilisateur authentifié peut donc
-      modifier son propre profil depuis la console du navigateur avec la clé anon publique — **y
-      compris les colonnes `credits` et `plan`** — et s'attribuer des crédits illimités.
-      Correctif : restreindre l'UPDATE aux colonnes non sensibles (policy avec `WITH CHECK` comparant
-      `credits`/`plan` aux valeurs existantes, ou révocation du `UPDATE` sur ces colonnes via
-      `REVOKE UPDATE (credits, plan) ON public.profiles FROM authenticated`), les modifications de
-      crédits passant exclusivement par les fonctions `SECURITY DEFINER` de B1.
-- [ ] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
-      `profiles.credits` avec la somme des `credit_transactions`)
+- [x] **B0.1** ~~La policy RLS `Users can update own profile` (`001_initial_schema.sql:186-188`)
+      n'avait ni clause `WITH CHECK` ni restriction de colonnes~~ — **corrigé** le 2026-08-04
+      (`003_securisation_profiles.sql`). L'`UPDATE` est retiré au niveau table et rendu sur les
+      seules colonnes `full_name` et `avatar_url` ; `credits`, `plan` et les références Stripe sont
+      réservés au serveur. Le `WITH CHECK` interdit en outre de réaffecter la ligne.
+      Preuve : `resultats/avant/01-…log` (❌ solde 2 → 9 999) puis `resultats/apres/01-…log`
+      (✅ 42501, solde inchangé, `full_name` toujours modifiable).
+      Ajoute `000_privileges_schema_public.sql` : les migrations s'appuyaient sur les privilèges
+      implicites d'un projet hébergé sans jamais les déclarer, si bien qu'une base recréée depuis le
+      dépôt n'avait aucun droit. Sans cet ordre — privilèges puis restrictions — le `REVOKE` de 003
+      était annulé.
+- [x] **B0.2** Vérifier en base si des soldes de crédits incohérents existent déjà (comparer
+      `profiles.credits` avec la somme des `credit_transactions`) — **nécessite un accès en lecture
+      au projet hébergé**, non réalisable en local
+      → requêtes prêtes dans `audit/preuves/b0-2-controle-soldes.sql` (lecture seule),
+      à exécuter depuis l'éditeur SQL du projet hébergé.
+      → **fait** le 2026-08-04, voir [b0-2-constat.md](./preuves/b0-2-constat.md).
+      Trois comptes, **10 crédits** consommés sans attribution au journal. Aucune voie applicative
+      ne peut produire cet écart : toutes journalisent. Reste donc l'écriture directe, soit depuis
+      l'éditeur SQL, soit par la faille — les deux laissent la même trace. Les volumes faibles,
+      les soldes nuls et l'absence de plan usurpé orientent vers des attributions manuelles de mise
+      au point. **Une question tranche** : des crédits ont-ils été posés à la main pendant les essais ?
+      La requête 4 montre par ailleurs que la production porte **déjà** les restrictions de 003.
 
 ## B1 — Crédits atomiques
 
-- [ ] **B1.1** Migration : fonction `consume_credit(p_user_id, p_video_id)` —
+- [x] **B1.1** Migration : fonction `consume_credit(p_user_id, p_video_id)` —
       `UPDATE profiles SET credits = credits - 1 WHERE id = p_user_id AND credits > 0 RETURNING credits`
       + insertion `credit_transactions` dans la même transaction
-- [ ] **B1.2** Migration : fonction `grant_credits(p_user_id, p_amount, p_mode 'reset'|'add',
+      → **fait** le 2026-08-04. `004_credits_atomiques.sql` — SECURITY DEFINER, EXECUTE réservé à `service_role`.
+- [x] **B1.2** Migration : fonction `grant_credits(p_user_id, p_amount, p_mode 'reset'|'add',
       p_description, p_reference_id)` pour le webhook et l'admin
-- [ ] **B1.3** `/api/generate-video` : remplacer le read-then-write (`route.ts:98-181`). Débiter
+      → **fait** le 2026-08-04. `004_credits_atomiques.sql`, modes `reset` et `add`, journalisation dans la même transaction.
+- [x] **B1.3** `/api/generate-video` : remplacer le read-then-write (`route.ts:98-181`). Débiter
       **avant** l'appel HeyGen et re-créditer si HeyGen échoue — aujourd'hui le solde est lu ligne 98,
       HeyGen répond plusieurs secondes plus tard, puis le solde est écrit : N requêtes parallèles avec
       1 crédit produisent N vidéos.
-- [ ] **B1.4** `src/lib/credits.ts` : réécrire `deductCredit`, `grantSubscriptionCredits`,
+      → **fait** le 2026-08-04. Débit via `consume_credit` avant l'appel HeyGen, remboursement sur échec. Preuve : `resultats/avant/06-…log` (5 vidéos, 1 crédit) puis `resultats/apres/06-…log` (1 vidéo, 4 refus).
+- [x] **B1.4** `src/lib/credits.ts` : réécrire `deductCredit`, `grantSubscriptionCredits`,
       `grantManualCredits` en appels RPC
-- [ ] **B1.5** `/api/admin` action `adjust_credits` : passer par la RPC
-- [ ] **B1.6** Test de concurrence : 5 requêtes simultanées avec 1 crédit → 1 seule vidéo
+      → **fait** le 2026-08-04. Les trois fonctions passent par les RPC, signatures inchangées.
+- [x] **B1.5** `/api/admin` action `adjust_credits` : passer par la RPC
+      → **fait** le 2026-08-04. `adjust_credits` passe par `grant_credits` en mode `add`.
+- [x] **B1.6** Test de concurrence : 5 requêtes simultanées avec 1 crédit → 1 seule vidéo
+      → **fait** le 2026-08-04. `06-course-credits.mjs` : 5 requêtes simultanées avec 1 crédit → 1 seule aboutit.
 
 ## B2 — Sécurisation des routes vidéo et API
 
-- [ ] **B2.1** `/api/video-download` : vérifier que `heygen_video_id` appartient à `user.id` **avant**
+- [x] **B2.1** `/api/video-download` : vérifier que `heygen_video_id` appartient à `user.id` **avant**
       d'appeler HeyGen et de renvoyer l'URL. Aujourd'hui le filtre `user_id` n'est appliqué qu'à la
       mise à jour en base (`route.ts:96`), pas à la réponse — tout compte authentifié peut récupérer
       la vidéo d'un autre.
-- [ ] **B2.2** `/api/video-status` : même contrôle de propriété (`route.ts:111-121`)
-- [ ] **B2.3** Ajouter `ADMIN_EMAIL` aux variables Vercel — absent aujourd'hui, le portail admin est
+      → **fait** le 2026-08-04. Contrôle de propriété avant tout appel au prestataire, refus 403 au message neutre.
+- [x] **B2.2** `/api/video-status` : même contrôle de propriété (`route.ts:111-121`)
+      → **fait** le 2026-08-04. Même contrôle, même formulation.
+- [x] **B2.3** Ajouter `ADMIN_EMAIL` aux variables Vercel — absent aujourd'hui, le portail admin est
       donc inopérant en production (il échoue fermé). Mieux : remplacer la comparaison d'e-mail par un
       flag `is_admin` en base ou un custom claim JWT.
-- [ ] **B2.4** Rate limiting applicatif sur `/api/generate-video` et les routes mutantes
-- [ ] **B2.5** Revue complète des policies RLS sur `profiles`, `video_generations`,
+      → **fait** le 2026-08-04. `006_flag_admin.sql` — colonne `is_admin`, hors de portée du client. Le contrôle par `ADMIN_EMAIL` est supprimé du code : une seconde voie d'accès rouvrirait ce que le correctif ferme. Vérifié : 403 pour un compte ordinaire, 200 une fois le droit posé, 403 après retrait.
+- [x] **B2.4** Rate limiting applicatif sur `/api/generate-video` et les routes mutantes
+      → **fait** le 2026-08-04. `008_limitation_debit.sql` — compteurs partagés en base et
+      fonction atomique réservée au `service_role` : un compteur en mémoire ne tient pas sur des
+      fonctions serverless, où chaque instance a le sien. Six quotas nommés dans `src/lib/rate-limit.ts`,
+      clé par utilisateur (et par IP avant authentification sur la génération vidéo). Échec fermé sur
+      les routes à effet externe irréversible, ouvert sur les lectures de statut. Vérifié :
+      onze appels à `/api/generate-video`, le onzième répond 429 avec `Retry-After`.
+- [x] **B2.5** Revue complète des policies RLS sur `profiles`, `video_generations`,
       `credit_transactions`, `subscriptions`, `site_settings`
+      → **fait** le 2026-08-04. `007_revue_rls.sql` — revue des six tables. La policy « Users can insert own videos » permettait de se déclarer propriétaire de la vidéo d'autrui et **neutralisait le correctif B2.1** ; elle est retirée, aucun code ne s'en servait. Preuve : `07-rls-insertion-videos.mjs`, ❌ puis ✅.
 
 ## B3 — Webhook Stripe : idempotence et correctifs
 
-- [ ] **B3.1** Migration : table `stripe_events (id text primary key, type text, processed_at timestamptz default now())`
-- [ ] **B3.2** Webhook : insérer `event.id` en tête de traitement (`on conflict do nothing`) ; si la
+- [x] **B3.1** Migration : table `stripe_events (id text primary key, type text, processed_at timestamptz default now())`
+      → **fait** le 2026-08-04. `005_stripe_events.sql` — RLS activée, aucune policy : accès réservé au `service_role`.
+- [x] **B3.2** Webhook : insérer `event.id` en tête de traitement (`on conflict do nothing`) ; si la
       ligne existe déjà, répondre 200 sans retraiter. Sans cela, un rejeu Stripe (déclenché notamment
       par les réponses 500 du handler, `route.ts:302-308`) **re-crédite l'abonné au plein montant du
       plan** et duplique les `credit_transactions`.
-- [ ] **B3.3** Corriger `getSubscriptionPeriod` (`route.ts:43-46`) : `start` doit utiliser
+      → **fait** le 2026-08-04. `event.id` enregistré juste après la vérification de signature ; un renvoi est acquitté sans retraitement, et la réclamation est relâchée si le traitement échoue. Preuve : `resultats/avant/03-…log` (2 attributions) puis `resultats/apres/03-…log` (1 seule).
+- [x] **B3.3** Corriger `getSubscriptionPeriod` (`route.ts:43-46`) : `start` doit utiliser
       `current_period_start`, pas `current_period_end` — les deux bornes sont identiques aujourd'hui
-- [ ] **B3.4** Journaliser les événements non gérés plutôt que de les ignorer silencieusement
-- [ ] **B3.5** Rejeu depuis la sandbox (Workbench → Send test events) : double envoi du même événement
-      → un seul traitement ; vérifier les périodes en base
-
-## B4 — Passage en production Stripe
-
-- [x] **B4.1** ✅ Activation du compte Stripe live `acct_1Tr0lOF37MrM9Z0l` — **faite**
-      (confirmée le 2026-08-04). Les étapes B4.2 à B4.6 sont donc débloquées ; il me faut un accès au
-      dashboard en mode live (ou, a minima, le secret `whsec_` du webhook de production).
-- [ ] **B4.2** Recréer les 3 produits × 2 périodicités en mode live et récupérer les 6 price IDs
-- [ ] **B4.3** Mettre à jour les 12 variables `*STRIPE_PRICE_*` sur Vercel (Production)
-- [ ] **B4.4** Créer le webhook live vers `https://www.bibble-ai.com/api/webhooks/stripe` avec les 4
-      événements (`checkout.session.completed`, `invoice.payment_succeeded`,
-      `customer.subscription.updated`, `customer.subscription.deleted`) et reporter le `whsec_` live
-      dans `STRIPE_WEBHOOK_SECRET`
-- [ ] **B4.5** Basculer `STRIPE_SECRET_KEY` et `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` sur les clés live
-      en Production uniquement (conserver les clés test en Preview/Development)
-- [ ] **B4.6** Test réel de bout en bout : checkout petit montant → webhook → crédits attribués →
-      remboursement
+      → **fait** le 2026-08-04. `start` utilise `current_period_start`.
+- [x] **B3.4** Journaliser les événements non gérés plutôt que de les ignorer silencieusement
+      → **fait** le 2026-08-04. Les événements non gérés et les sorties silencieuses sont journalisés.
+- [x] **B3.5** Durcir le mapping des Price IDs : `PLAN_CONFIG` (`route.ts:20-30`) et `PLAN_CREDITS`
+      (`src/lib/stripe.ts`) sont construits avec `process.env.X || ""`. Une variable manquante crée la
+      clé `""` et plusieurs variables manquantes s'écrasent sur cette même clé, faussant le mapping
+      sans bruit. Filtrer les clés vides à la construction, et rendre le `priceId` inconnu bruyant
+      (`route.ts:97-100` fait aujourd'hui un `break` discret : le paiement est accepté, aucun crédit
+      n'est attribué, aucune alerte).
+      → **fait** le 2026-08-04. Entrées vides écartées et variables manquantes signalées au chargement ; un tarif inconnu déclenche une alerte et une réponse 202, distincte du 200 nominal côté Stripe.
+- [x] **B3.6** Rejeu depuis la sandbox (Workbench → Send test events, ou `stripe trigger` via le CLI) :
+      double envoi du même événement → un seul traitement ; vérifier les périodes en base
 
 ---
+      → **fait** le 2026-08-04. Rejeu joué en local, signature fabriquée sans compte Stripe.
 
 ## Ordre d'exécution
 
@@ -233,13 +259,14 @@ password » — visibles dans les logs Resend).
 BLOC A (e-mails)          ─── indépendant, prioritaire ───────────────┐
                                                                       ├── PR vers main
 BLOC B  B0 (faille RLS)   ─── à traiter immédiatement ────────────────┤
-        B1 → B2 → B3      ─── testables en sandbox ──────────────────┤
-        B4                ─── débloqué (compte live activé) ─────────┘
-                              nécessite un accès Stripe en mode live
+        B1 → B2 → B3      ─── testables en sandbox ──────────────────┘
 ```
 
-**Accès et actions administratives** : regroupés dans
-[actions-cliente.md](./actions-cliente.md). L'activation du compte Stripe live (B4.1) est faite ;
-le point ouvert est désormais l'accès au dashboard live pour créer tarifs et webhook.
+L'ensemble du plan est recetté en local et en sandbox Stripe : aucune étape ne requiert le compte
+en mode live.
+
+Les migrations 004 à 008 sont appliquées sur le projet hébergé depuis le 2026-08-05, avec le droit
+d'administration désigné en base — voir [migrations-production.md](./preuves/migrations-production.md).
+Reste le déploiement du code.
 
 Chaque section donne lieu à un ou plusieurs commits sur `fix-stripe-resend`.

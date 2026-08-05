@@ -31,45 +31,30 @@ export async function getCreditsBalance(userId: string): Promise<number> {
 /**
  * Déduit 1 crédit pour une génération de vidéo
  * Retourne le nouveau solde ou null en cas d'erreur
+ *
+ * Le débit et l'écriture de la transaction sont faits en base par
+ * `consume_credit` (004_credits_atomiques.sql) : plus de lecture-puis-écriture,
+ * donc plus de course entre deux générations simultanées.
  */
 export async function deductCredit(
   userId: string,
   videoId: string
 ): Promise<number | null> {
-  // Récupérer le solde actuel
-  const currentBalance = await getCreditsBalance(userId);
+  const { data, error } = await supabaseAdmin.rpc("consume_credit", {
+    p_user_id: userId,
+    p_video_id: videoId,
+  });
 
-  if (currentBalance <= 0) {
-    return null; // Pas assez de crédits
+  if (error) {
+    console.error("Erreur lors de la consommation du crédit:", error);
+    return null;
   }
 
-  const newBalance = currentBalance - 1;
+  // Solde insuffisant ou profil introuvable : l'appelant traite le null
+  // exactement comme avant.
+  if (!data?.success) return null;
 
-  // Mettre à jour le solde
-  const { error: updateError } = await supabaseAdmin
-    .from("profiles")
-    .update({ credits: newBalance })
-    .eq("id", userId);
-
-  if (updateError) return null;
-
-  // Enregistrer la transaction
-  const { error: transactionError } = await supabaseAdmin
-    .from("credit_transactions")
-    .insert({
-      user_id: userId,
-      type: "usage_debit" as const,
-      amount: -1,
-      balance_after: newBalance,
-      description: "Génération de vidéo",
-      reference_id: videoId,
-    });
-
-  if (transactionError) {
-    console.error("Erreur lors de l'enregistrement de la transaction:", transactionError);
-  }
-
-  return newBalance;
+  return data.balance;
 }
 
 /**
@@ -81,31 +66,20 @@ export async function grantSubscriptionCredits(
   credits: number,
   subscriptionId: string
 ): Promise<boolean> {
-  // Mettre à jour le solde avec les nouveaux crédits
-  const { error: updateError } = await supabaseAdmin
-    .from("profiles")
-    .update({ credits })
-    .eq("id", userId);
+  const { data, error } = await supabaseAdmin.rpc("grant_credits", {
+    p_user_id: userId,
+    p_amount: credits,
+    p_mode: "reset",
+    p_description: `Renouvellement abonnement — ${credits} crédits attribués`,
+    p_reference_id: subscriptionId,
+  });
 
-  if (updateError) return false;
-
-  // Enregistrer la transaction
-  const { error: transactionError } = await supabaseAdmin
-    .from("credit_transactions")
-    .insert({
-      user_id: userId,
-      type: "subscription_credit" as const,
-      amount: credits,
-      balance_after: credits,
-      description: `Renouvellement abonnement — ${credits} crédits attribués`,
-      reference_id: subscriptionId,
-    });
-
-  if (transactionError) {
-    console.error("Erreur lors de l'enregistrement de la transaction:", transactionError);
+  if (error) {
+    console.error("Erreur lors de l'attribution des crédits d'abonnement:", error);
+    return false;
   }
 
-  return true;
+  return data?.success === true;
 }
 
 /**
@@ -116,29 +90,18 @@ export async function grantManualCredits(
   credits: number,
   description: string
 ): Promise<boolean> {
-  const currentBalance = await getCreditsBalance(userId);
-  const newBalance = currentBalance + credits;
+  const { data, error } = await supabaseAdmin.rpc("grant_credits", {
+    p_user_id: userId,
+    p_amount: credits,
+    p_mode: "add",
+    p_description: description,
+    p_reference_id: null,
+  });
 
-  const { error: updateError } = await supabaseAdmin
-    .from("profiles")
-    .update({ credits: newBalance })
-    .eq("id", userId);
-
-  if (updateError) return false;
-
-  const { error: transactionError } = await supabaseAdmin
-    .from("credit_transactions")
-    .insert({
-      user_id: userId,
-      type: "manual_credit" as const,
-      amount: credits,
-      balance_after: newBalance,
-      description,
-    });
-
-  if (transactionError) {
-    console.error("Erreur lors de l'enregistrement de la transaction:", transactionError);
+  if (error) {
+    console.error("Erreur lors de l'attribution manuelle des crédits:", error);
+    return false;
   }
 
-  return true;
+  return data?.success === true;
 }

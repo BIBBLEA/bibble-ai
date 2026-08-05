@@ -1,0 +1,160 @@
+import Stripe from "stripe";
+import {
+  COMPTE_A,
+  clientAdmin,
+  exigerAppEnLigne,
+  indetermine,
+  log,
+  seConnecter,
+  titre,
+  variable,
+  verdict,
+} from "./_lib.mjs";
+
+// ============================================
+// PREUVE 03 — Rejeu d'une notification Stripe (B3.1 / B3.2)
+// ============================================
+// Démontrer le correctif : mémoriser les `event.id` traités et ignorer les répétitions.
+//
+// Cible : src/app/api/webhooks/stripe/route.ts:46-296 — signature vérifiée, événements jamais
+//         dédupliqués. Stripe rejoue sur absence de 2xx, ce que le handler provoque lui-même en
+//         répondant 500 (route.ts:299-305).
+// Méthode : poster deux fois le même `event.id` avec une signature valide. Signature calculée
+//           localement (generateTestHeaderString), aucun compte Stripe requis. L'événement
+//           `customer.subscription.updated` est le seul traité sans appel à l'API Stripe.
+//
+// Avant : 2 attributions de crédits pour 1 événement — code 1
+// Après : 1 seule attribution — code 0
+// ============================================
+
+const ID_EVENEMENT = "evt_preuve_rejeu_idempotence";
+const ID_ABONNEMENT = "sub_preuve_rejeu_idempotence";
+
+titre("03 — Rejeu d'un événement Stripe : double attribution de crédits");
+
+const base = await exigerAppEnLigne();
+const secret = variable("STRIPE_WEBHOOK_SECRET");
+const priceId = variable("STRIPE_PRICE_GROWTH_MONTHLY");
+const priceIdPrecedent = variable("STRIPE_PRICE_STARTER_MONTHLY");
+
+if (!priceId || !priceIdPrecedent) {
+  indetermine(
+    "STRIPE_PRICE_GROWTH_MONTHLY et STRIPE_PRICE_STARTER_MONTHLY doivent être définis," +
+      " avec les mêmes valeurs que celles vues par l'application"
+  );
+}
+
+const { user } = await seConnecter(COMPTE_A);
+const admin = clientAdmin();
+
+// --- État de départ : solde à zéro, journal vierge pour cette référence ---
+await admin.from("profiles").update({ credits: 0, plan: "starter" }).eq("id", user.id);
+await admin.from("credit_transactions").delete().eq("reference_id", ID_ABONNEMENT);
+
+// La table des événements traités survit aux exécutions : sans ce nettoyage, le
+// premier envoi serait vu comme un rejeu et le test conclurait à l'idempotence
+// sans jamais avoir observé une attribution. L'erreur est ignorée tant que la
+// table n'existe pas (état d'avant correctif).
+await admin.from("stripe_events").delete().eq("id", ID_EVENEMENT);
+
+log(`Compte A (${user.id}) remis à 0 crédit, plan « starter »`);
+
+// --- Construction de l'événement ---
+const maintenant = Math.floor(Date.now() / 1000);
+const evenement = {
+  id: ID_EVENEMENT,
+  object: "event",
+  api_version: "2026-06-24.dahlia",
+  created: maintenant,
+  livemode: false,
+  pending_webhooks: 0,
+  request: { id: null, idempotency_key: null },
+  type: "customer.subscription.updated",
+  data: {
+    object: {
+      id: ID_ABONNEMENT,
+      object: "subscription",
+      status: "active",
+      customer: "cus_preuve_rejeu",
+      metadata: { supabase_user_id: user.id },
+      items: {
+        object: "list",
+        data: [
+          {
+            id: "si_preuve_rejeu",
+            object: "subscription_item",
+            price: { id: priceId, object: "price" },
+            current_period_start: maintenant,
+            current_period_end: maintenant + 30 * 24 * 3600,
+          },
+        ],
+      },
+    },
+    // Prix précédent différent → le handler y voit un changement de plan et crédite
+    previous_attributes: {
+      items: { data: [{ price: { id: priceIdPrecedent } }] },
+    },
+  },
+};
+
+const corps = JSON.stringify(evenement);
+const signature = Stripe.webhooks.generateTestHeaderString({ payload: corps, secret });
+
+log(`Événement forgé : ${evenement.type} — id ${ID_EVENEMENT}`);
+log("Signature calculée localement (aucun appel réseau vers Stripe)");
+
+async function envoyer(numero) {
+  const reponse = await fetch(`${base}/api/webhooks/stripe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "stripe-signature": signature },
+    body: corps,
+  });
+  const texte = await reponse.text();
+  log(`Envoi n°${numero} → HTTP ${reponse.status} ${texte}`);
+  if (reponse.status === 400) {
+    indetermine(
+      "signature refusée : le STRIPE_WEBHOOK_SECRET du script diffère de celui de l'application"
+    );
+  }
+}
+
+log("");
+await envoyer(1);
+const { credits: soldeApres1 } = (
+  await admin.from("profiles").select("credits").eq("id", user.id).single()
+).data;
+log(`  solde après le 1er envoi : ${soldeApres1} crédits`);
+
+await envoyer(2);
+const { credits: soldeApres2 } = (
+  await admin.from("profiles").select("credits").eq("id", user.id).single()
+).data;
+log(`  solde après le 2e envoi (même événement) : ${soldeApres2} crédits`);
+
+const { data: transactions } = await admin
+  .from("credit_transactions")
+  .select("id, amount, description, created_at")
+  .eq("reference_id", ID_ABONNEMENT)
+  .order("created_at", { ascending: true });
+
+log("");
+log(`Lignes dans credit_transactions pour cet abonnement : ${transactions.length}`);
+for (const [index, t] of transactions.entries()) {
+  log(`  ${index + 1}. ${t.created_at} — ${t.amount >= 0 ? "+" : ""}${t.amount} — ${t.description}`);
+}
+
+// Sans attribution au premier envoi, il n'y a rien à dédupliquer : conclure à
+// l'idempotence serait un faux positif.
+if (transactions.length === 0) {
+  indetermine(
+    "le premier envoi n'a attribué aucun crédit — l'événement était déjà enregistré," +
+      " le tarif n'est pas reconnu, ou le traitement a échoué. Rien ne peut être conclu."
+  );
+}
+
+verdict(
+  transactions.length > 1,
+  `le même événement rejoué a produit ${transactions.length} attributions de crédits` +
+    " au lieu d'une seule — un rejeu Stripe recrédite un abonné indéfiniment",
+  "le rejeu du même événement n'a produit qu'une seule attribution"
+);

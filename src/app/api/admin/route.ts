@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
+import { appliquerQuota, cleUtilisateur } from "@/lib/rate-limit";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+// Le droit d'administration est porté par la colonne `profiles.is_admin`
+// (migration 006), pas par une adresse e-mail. ADMIN_EMAIL n'est plus lu :
+// conserver une seconde voie d'accès en secours reviendrait à garder ouverte
+// celle que le correctif ferme — l'adresse circule, elle est portable d'un
+// compte à l'autre par le parcours de changement d'e-mail, et une variable
+// d'environnement vaut pour tous les déploiements qui la partagent. La reprise
+// en cas de perte du dernier administrateur passe par le SQL, donc par un accès
+// au projet Supabase : c'est le bon niveau d'exigence.
 
 function getSupabaseAdmin() {
   return createClient<Database>(
@@ -24,9 +32,23 @@ async function verifyAdmin(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || user.email !== ADMIN_EMAIL) {
+  if (error || !user) {
     return null;
   }
+
+  // Lecture du flag avec la clé service_role : le client n'a aucune prise
+  // dessus, et le résultat ne dépend pas des policies de la table.
+  const { data: profil, error: erreurProfil } = await getSupabaseAdmin()
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  // Échec fermé : profil absent, lecture en erreur ou flag non positionné.
+  if (erreurProfil || !profil?.is_admin) {
+    return null;
+  }
+
   return user;
 }
 
@@ -75,6 +97,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 
+  // --- Limitation de débit ---
+  // Seul le PATCH est limité : le GET ne fait que lire. La clé est
+  // l'administrateur lui-même — le quota borne un jeton d'administration
+  // détourné ou une interface qui boucle, pas un abus anonyme, le contrôle
+  // `profiles.is_admin` ayant déjà filtré l'appelant.
+  const limite = await appliquerQuota("administration", cleUtilisateur(admin.id));
+  if (limite) return limite;
+
   const supabaseAdmin = getSupabaseAdmin();
   const body = await request.json();
   const { action } = body;
@@ -104,38 +134,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "userId et delta (+1/-1) requis." }, { status: 400 });
     }
 
-    // Get current credits
-    const { data: profile, error: fetchError } = await supabaseAdmin
-      .from("profiles")
-      .select("credits")
-      .eq("id", userId)
-      .single();
+    // Ajustement atomique : la RPC lit, écrit et journalise dans la même
+    // transaction, et borne le solde à 0 (004_credits_atomiques.sql).
+    const { data: grant, error: grantError } = await supabaseAdmin.rpc(
+      "grant_credits",
+      {
+        p_user_id: userId,
+        p_amount: delta,
+        p_mode: "add",
+        p_description: `Ajustement manuel par admin (${delta > 0 ? "+" : ""}${delta})`,
+        p_reference_id: null,
+      }
+    );
 
-    if (fetchError || !profile) {
-      return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    if (grantError) {
+      return NextResponse.json({ error: grantError.message }, { status: 500 });
     }
 
-    const newCredits = Math.max(0, profile.credits + delta);
-
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({ credits: newCredits })
-      .eq("id", userId);
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (!grant?.success) {
+      if (grant?.reason === "profile_not_found") {
+        return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Ajustement impossible." }, { status: 500 });
     }
 
-    // Log the transaction
-    await supabaseAdmin.from("credit_transactions").insert({
-      user_id: userId,
-      type: "manual_credit",
-      amount: delta,
-      balance_after: newCredits,
-      description: `Ajustement manuel par admin (${delta > 0 ? "+" : ""}${delta})`,
-    });
-
-    return NextResponse.json({ success: true, credits: newCredits });
+    return NextResponse.json({ success: true, credits: grant.balance });
   }
 
   return NextResponse.json({ error: "Action invalide." }, { status: 400 });

@@ -1,0 +1,18 @@
+
+==============================================================================
+02 — IDOR : accès aux vidéos d'un autre utilisateur
+==============================================================================
+[2026-08-04 21:25:32Z] Connecté en tant que preuve-a@bibble-preuves.test (4fae919b-2cf1-4076-a5b5-ac0f9987ee90)
+[2026-08-04 21:25:32Z] Application testée : http://localhost:3100
+[2026-08-04 21:25:32Z] 
+[2026-08-04 21:25:32Z] --- /api/video-download ---
+[2026-08-04 21:25:33Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer l'URL de téléchargement."}
+[2026-08-04 21:25:33Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
+[2026-08-04 21:25:33Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
+[2026-08-04 21:25:33Z] 
+[2026-08-04 21:25:33Z] --- /api/video-status ---
+[2026-08-04 21:25:34Z]   vidéo de A (légitime)   → HTTP 502 {"error":"Impossible de récupérer le statut de la vidéo."}
+[2026-08-04 21:25:34Z]   vidéo de B (illégitime) → HTTP 403 {"error":"Vidéo introuvable ou accès non autorisé."}
+[2026-08-04 21:25:34Z]   ⇒ la demande sur la vidéo d'autrui est refusée (403)
+
+✅ BLOQUÉ — les deux routes refusent (403) l'accès à la vidéo d'un autre utilisateur

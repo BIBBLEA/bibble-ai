@@ -1,7 +1,14 @@
-# État des lieux global — bibble-ai
+# État des lieux — bibble-ai
 
-> Synthèse du 2026-08-04 — branche `fix-stripe-resend`
-> Détails par service : [Supabase](./etat-supabase.md) · [Resend](./etat-resend.md) · [Stripe](./etat-stripe.md)
+Synthèse du 2026-08-04, branche `fix-stripe-resend`. Point d'entrée de l'audit.
+
+| Document | Contenu |
+|---|---|
+| [plan-implementation.md](./plan-implementation.md) | Déroulé des travaux, tâche par tâche, avec l'avancement |
+| [etat-supabase.md](./etat-supabase.md) | Supabase — SMTP Resend actif ; tout le flux « mot de passe oublié » manque côté app |
+| [etat-resend.md](./etat-resend.md) | Resend — domaine vérifié, envois délivrés ; les échecs récents viennent de tests faits avec `vous@example.com` |
+| [etat-stripe.md](./etat-stripe.md) | Stripe — sandbox conforme au code ; correctifs applicatifs à faire |
+| [preuves/](./preuves/) | Chaque faille exploitée avant correctif, bloquée après |
 
 ## Contexte
 
@@ -28,10 +35,9 @@ SaaS de génération de vidéos avatar (Next.js + Supabase + HeyGen + Stripe), d
 |---|---|---|
 | 0 | **Escalade de crédits via RLS** : la policy `Users can update own profile` (`001_initial_schema.sql:186-188`) n'a **ni `WITH CHECK` ni restriction de colonnes** → tout utilisateur connecté peut s'attribuer des crédits illimités depuis la console du navigateur avec la clé anon | Base |
 | 1 | **Aucun flux « mot de passe oublié »** : code reverté (commits `baa348d`, `02649d9`, `a7e6962`), aucun lien sur `/login` | Code |
-| 2 | ~~Compte Stripe live non activé~~ — **résolu le 2026-08-04** (activation effectuée). Restent les étapes techniques : tarifs live, webhook live, bascule des clés | Stripe |
-| 3 | **Crédits non atomiques** : lecture-puis-écriture partout (`generate-video`, `lib/credits.ts`, admin) → course : N requêtes parallèles avec 1 crédit = N vidéos | Code |
-| 4 | **Pas d'idempotence webhook** : un retry Stripe re-crédite au plein montant du plan | Code |
-| 5 | **IDOR vidéos** : `/api/video-download` et `/api/video-status` renvoient l'URL/statut de n'importe quelle vidéo à tout utilisateur authentifié (propriété non vérifiée) | Code |
+| 2 | **Crédits non atomiques** : lecture-puis-écriture partout (`generate-video`, `lib/credits.ts`, admin) → course : N requêtes parallèles avec 1 crédit = N vidéos | Code |
+| 3 | **Pas d'idempotence webhook** : un retry Stripe re-crédite au plein montant du plan | Code |
+| 4 | **IDOR vidéos** : `/api/video-download` et `/api/video-status` renvoient l'URL/statut de n'importe quelle vidéo à tout utilisateur authentifié (propriété non vérifiée) | Code |
 
 ### 🔴 Parcours e-mail : 1 implémenté sur 6
 
@@ -62,7 +68,7 @@ Défauts du parcours d'inscription existant :
 | 10 | `ADMIN_EMAIL` absent des variables Vercel → panneau admin inopérant en prod (échoue fermé) ; contrôle admin par e-mail fragile | Vercel/Code |
 | 11 | Aucun rate limiting applicatif sur les routes API (génération vidéo notamment) | Code |
 | 12 | Supabase org **Free / instance Nano** en production ; RLS non audité en détail | Supabase |
-| 13 | Webhook test pointe vers `bibble-ai-kappa.vercel.app` — le webhook live devra viser `www.bibble-ai.com` | Stripe |
+| 13 | Mapping des Price IDs construit avec `env || ""` : une variable manquante fausse silencieusement le mapping, et un `priceId` inconnu passe en `break` discret (paiement sans crédit, sans alerte) | Code (`webhooks/stripe/route.ts:20-30`, `lib/stripe.ts`) |
 
 ## Conclusion
 
@@ -78,8 +84,6 @@ Trois chantiers, par ordre d'urgence :
    confirmation, changement de mot de passe et d'e-mail, page « Mon compte », templates en français.
 3. **Crédits atomiques, IDOR et idempotence (BLOC B)** — les vulnérabilités de l'audit initial.
 
-L'**activation du compte Stripe live** — préalable administratif à tout lancement — a été réalisée
-le 2026-08-04 : le passage en production n'est plus bloqué par un délai externe.
-
-Le déroulé des travaux est dans [plan-implementation.md](./plan-implementation.md) ; ce qui relève
-des accès et comptes tiers est regroupé dans [actions-cliente.md](./actions-cliente.md).
+Le déroulé des travaux est dans [plan-implementation.md](./plan-implementation.md). Tout y est
+recetté en local et en sandbox Stripe ; la bascule du compte en mode live relève de l'administration
+du compte et sort du périmètre.

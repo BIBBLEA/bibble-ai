@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import {
   AVATARS,
@@ -9,6 +9,7 @@ import {
   MAX_SCRIPT_CHARACTERS,
   getVideoFormat,
 } from "@/lib/heygen-config";
+import { appliquerQuota, cleIp, cleUtilisateur } from "@/lib/rate-limit";
 
 const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY!;
 const HEYGEN_BASE_URL = "https://api.heygen.com";
@@ -20,8 +21,42 @@ function countWords(text: string): number {
     .filter((word) => word.length > 0).length;
 }
 
+/**
+ * Re-crédite l'utilisateur quand la génération échoue après le débit.
+ * Un échec de génération ne doit jamais être facturé.
+ */
+async function rembourserCredit(
+  supabaseAdmin: SupabaseClient<Database>,
+  userId: string,
+  generationId: string,
+  raison: string
+): Promise<void> {
+  const { data, error } = await supabaseAdmin.rpc("grant_credits", {
+    p_user_id: userId,
+    p_amount: 1,
+    p_mode: "add",
+    p_description: `Remboursement — ${raison}`,
+    p_reference_id: generationId,
+  });
+
+  if (error || !data?.success) {
+    console.error(
+      "Échec du remboursement du crédit:",
+      error ?? data?.reason,
+      `(user ${userId}, génération ${generationId})`
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Limitation de débit par IP, AVANT l'authentification : la vérification du
+    // jeton est elle-même un aller-retour réseau vers Supabase, et une rafale
+    // de jetons invalides n'est imputable à aucun compte. Quota large, une IP
+    // pouvant être partagée (voir src/lib/rate-limit.ts).
+    const limiteIp = await appliquerQuota("generation_video_ip", cleIp(request));
+    if (limiteIp) return limiteIp;
+
     const authHeader = request.headers.get("authorization");
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -43,6 +78,14 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Limitation de débit par utilisateur, avant le débit du crédit et l'appel
+    // HeyGen : les crédits bornent la dépense totale, pas la rafale.
+    const limiteUtilisateur = await appliquerQuota(
+      "generation_video",
+      cleUtilisateur(user.id)
+    );
+    if (limiteUtilisateur) return limiteUtilisateur;
 
     const body = await request.json();
     const { script, avatarId, voiceId, format, sceneDescription } = body;
@@ -95,25 +138,39 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("credits, plan")
-      .eq("id", user.id)
-      .single();
+    // Identifiant de la génération tiré côté serveur : il relie le débit à la
+    // vidéo avant même que la ligne video_generations n'existe.
+    const generationId = crypto.randomUUID();
 
-    if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "Profil utilisateur introuvable." },
-        { status: 404 }
-      );
+    // Débit AVANT l'appel HeyGen, en une seule instruction en base.
+    // Auparavant le solde était lu ici puis réécrit après HeyGen : cinq requêtes
+    // simultanées avec 1 crédit lisaient toutes « 1 » et produisaient 5 vidéos.
+    const { data: consumption, error: consumptionError } =
+      await supabaseAdmin.rpc("consume_credit", {
+        p_user_id: user.id,
+        p_video_id: generationId,
+      });
+
+    if (consumptionError || !consumption) {
+      console.error("Erreur lors de la consommation du crédit:", consumptionError);
+      return NextResponse.json({ error: "Erreur interne." }, { status: 500 });
     }
 
-    if (profile.credits <= 0) {
+    if (!consumption.success) {
+      if (consumption.reason === "profile_not_found") {
+        return NextResponse.json(
+          { error: "Profil utilisateur introuvable." },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json(
         { error: "Vous n'avez plus de crédits.", redirect: "/dashboard/billing" },
         { status: 403 }
       );
     }
+
+    const newBalance = consumption.balance ?? 0;
 
     // Build HeyGen V3 payload
     const videoDimensions = getVideoFormat(format as "16:9" | "9:16");
@@ -142,20 +199,41 @@ export async function POST(request: NextRequest) {
 
     console.log("HeyGen v3 payload:", JSON.stringify(heygenPayload));
 
-    const heygenResponse = await fetch(`${HEYGEN_BASE_URL}/v3/videos`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "x-api-key": HEYGEN_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(heygenPayload),
-    });
+    // À partir d'ici le crédit est débité : tout chemin d'échec doit rembourser.
+    let heygenResponse: Response;
+    let heygenData: {
+      error?: unknown;
+      message?: string;
+      data?: { video_id?: string };
+    };
 
-    const heygenData = await heygenResponse.json();
+    try {
+      heygenResponse = await fetch(`${HEYGEN_BASE_URL}/v3/videos`, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "x-api-key": HEYGEN_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(heygenPayload),
+      });
+
+      heygenData = await heygenResponse.json();
+    } catch (heygenError) {
+      console.error("HeyGen v3 API unreachable:", heygenError);
+      await rembourserCredit(supabaseAdmin, user.id, generationId, "API HeyGen injoignable");
+      return NextResponse.json(
+        {
+          error: "Erreur lors de la génération vidéo.",
+          details: "API HeyGen injoignable",
+        },
+        { status: 502 }
+      );
+    }
 
     if (heygenData.error || !heygenResponse.ok) {
       console.error("HeyGen v3 API Error:", JSON.stringify(heygenData));
+      await rembourserCredit(supabaseAdmin, user.id, generationId, "erreur API HeyGen");
       return NextResponse.json(
         {
           error: "Erreur lors de la génération vidéo.",
@@ -167,22 +245,18 @@ export async function POST(request: NextRequest) {
 
     const videoId = heygenData.data?.video_id;
     if (!videoId) {
+      await rembourserCredit(supabaseAdmin, user.id, generationId, "réponse HeyGen inattendue");
       return NextResponse.json(
         { error: "Réponse inattendue de l'API." },
         { status: 502 }
       );
     }
 
-    const newBalance = profile.credits - 1;
-
-    await supabaseAdmin
-      .from("profiles")
-      .update({ credits: newBalance })
-      .eq("id", user.id);
-
-    const { data: videoRecord } = await supabaseAdmin
+    // L'id est imposé : c'est celui déjà référencé par la transaction de débit.
+    const { data: videoRecord, error: videoRecordError } = await supabaseAdmin
       .from("video_generations")
       .insert({
+        id: generationId,
         user_id: user.id,
         heygen_video_id: videoId,
         script: trimmedScript,
@@ -194,20 +268,21 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
 
-    await supabaseAdmin.from("credit_transactions").insert({
-      user_id: user.id,
-      type: "usage_debit",
-      amount: -1,
-      balance_after: newBalance,
-      description: `Génération vidéo — ${format}`,
-      reference_id: videoRecord?.id || videoId,
-    });
+    // La vidéo est déjà en génération chez HeyGen : on ne rembourse pas, mais
+    // l'échec d'historisation doit être visible dans les logs.
+    if (videoRecordError) {
+      console.error(
+        "Échec de l'enregistrement de la génération:",
+        videoRecordError,
+        `(génération ${generationId}, HeyGen ${videoId})`
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         video_id: videoId,
-        record_id: videoRecord?.id,
+        record_id: videoRecord?.id ?? generationId,
         status: "processing",
         credits_remaining: newBalance,
       },
