@@ -110,6 +110,62 @@ async function signalerTarifInconnu(
   );
 }
 
+// --- Écriture critique : toute erreur doit faire échouer le traitement ---
+// supabase-js ne lève pas d'exception, il RETOURNE l'erreur. Une écriture
+// échouée mais non contrôlée laissait donc la réclamation en place et répondait
+// 200 : l'abonné payait sans être crédité, et tout rejeu — même manuel — était
+// pris pour un doublon. Lever ici fait tomber dans le catch, qui libère
+// l'événement et répond 500 pour que Stripe rejoue.
+function exiger(erreur: { message: string } | null, contexte: string): void {
+  if (erreur) {
+    throw new Error(`${contexte} : ${erreur.message}`);
+  }
+}
+
+// --- Remise des crédits au montant du plan ---
+// Passe par grant_credits (004_credits_atomiques.sql) : solde et ligne de
+// journal sont écrits dans la même transaction, ils ne peuvent pas diverger.
+// Retour false = profil introuvable (compte supprimé entre le paiement et la
+// notification) : il n'y a personne à créditer, l'événement est acquitté sans
+// rejeu. Toute autre défaillance est levée — le catch libère l'événement et le
+// 500 fait rejouer Stripe.
+async function remettreCredits(
+  supabaseAdmin: ClientAdmin,
+  userId: string,
+  credits: number,
+  description: string,
+  referenceId: string,
+  contexte: string
+): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc("grant_credits", {
+    p_user_id: userId,
+    p_amount: credits,
+    p_mode: "reset",
+    p_description: description,
+    p_reference_id: referenceId,
+  });
+
+  if (error) {
+    throw new Error(
+      `${contexte} — attribution des crédits impossible : ${error.message}`
+    );
+  }
+
+  if (!data?.success) {
+    if (data?.reason === "profile_not_found") {
+      console.error(
+        `⚠️ ${contexte} — profil ${userId} introuvable : compte supprimé, aucun crédit attribué.`
+      );
+      return false;
+    }
+    throw new Error(
+      `${contexte} — attribution des crédits refusée (${data?.reason ?? "réponse vide"})`
+    );
+  }
+
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   // --- Client Supabase admin ---
   // Créé hors du bloc try : le catch doit pouvoir libérer l'événement réclamé.
@@ -186,12 +242,11 @@ export async function POST(request: NextRequest) {
 
     // Réclamation obtenue. Si le traitement échoue plus bas, elle sera relâchée
     // (voir libererEvenement) : conserver la ligne signerait un traitement qui
-    // n'a pas eu lieu et l'abonné ne serait jamais crédité, alors que les
-    // écritures effectuées ici sont rejouables sans dommage — le solde est
-    // *remis* au montant du plan (et non incrémenté) et la ligne subscriptions
-    // est un upsert. Seule une ligne de journal dans credit_transactions peut se
-    // retrouver en double après un échec partiel, ce qui est un moindre mal face
-    // à un abonnement payé et non crédité.
+    // n'a pas eu lieu et l'abonné ne serait jamais crédité. Les écritures
+    // effectuées ici sont rejouables sans dommage — le solde est *remis* au
+    // montant du plan par grant_credits (et non incrémenté), le journal part
+    // dans la même transaction que le solde, et les écritures subscriptions
+    // sont des upserts ou des updates idempotents.
     evenementReclame = event.id;
 
     // --- Traiter les événements ---
@@ -221,42 +276,48 @@ export async function POST(request: NextRequest) {
 
         const period = getSubscriptionPeriod(subscription);
 
-        // Mettre à jour le profil utilisateur
-        await supabaseAdmin
+        // Rattacher le client et l'abonnement Stripe au profil. Les crédits ne
+        // sont pas écrits ici : remettreCredits s'en charge en dernier, solde
+        // et journal dans la même transaction.
+        const { error: erreurProfil } = await supabaseAdmin
           .from("profiles")
           .update({
             plan: planConfig.plan,
-            credits: planConfig.credits,
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: subscriptionId,
           })
           .eq("id", userId);
+        exiger(erreurProfil, "checkout.session.completed — mise à jour du profil");
 
         // Créer/mettre à jour l'entrée dans subscriptions
-        await supabaseAdmin.from("subscriptions").upsert({
-          user_id: userId,
-          stripe_subscription_id: subscriptionId,
-          stripe_price_id: priceId,
-          plan: planConfig.plan,
-          status: "active",
-          credits_per_period: planConfig.credits,
-          current_period_start: period.start,
-          current_period_end: period.end,
-        });
+        const { error: erreurAbonnement } = await supabaseAdmin
+          .from("subscriptions")
+          .upsert({
+            user_id: userId,
+            stripe_subscription_id: subscriptionId,
+            stripe_price_id: priceId,
+            plan: planConfig.plan,
+            status: "active",
+            credits_per_period: planConfig.credits,
+            current_period_start: period.start,
+            current_period_end: period.end,
+          });
+        exiger(erreurAbonnement, "checkout.session.completed — upsert subscriptions");
 
-        // Enregistrer la transaction de crédits
-        await supabaseAdmin.from("credit_transactions").insert({
-          user_id: userId,
-          type: "subscription_credit",
-          amount: planConfig.credits,
-          balance_after: planConfig.credits,
-          description: `Abonnement ${planConfig.plan} — ${planConfig.credits} crédits attribués`,
-          reference_id: subscriptionId,
-        });
-
-        console.log(
-          `✅ Checkout completed: ${userId} → ${planConfig.plan} (${planConfig.credits} crédits)`
+        const credite = await remettreCredits(
+          supabaseAdmin,
+          userId,
+          planConfig.credits,
+          `Abonnement ${planConfig.plan} — ${planConfig.credits} crédits attribués`,
+          subscriptionId,
+          "checkout.session.completed"
         );
+
+        if (credite) {
+          console.log(
+            `✅ Checkout completed: ${userId} → ${planConfig.plan} (${planConfig.credits} crédits)`
+          );
+        }
         break;
       }
 
@@ -302,16 +363,8 @@ export async function POST(request: NextRequest) {
 
         const period = getSubscriptionPeriod(subscription);
 
-        // Réattribuer les crédits (NON CUMULATIF = reset au montant du plan)
-        await supabaseAdmin
-          .from("profiles")
-          .update({
-            credits: planConfig.credits,
-          })
-          .eq("id", userId);
-
         // Mettre à jour la période dans subscriptions
-        await supabaseAdmin
+        const { error: erreurPeriode } = await supabaseAdmin
           .from("subscriptions")
           .update({
             current_period_start: period.start,
@@ -319,20 +372,23 @@ export async function POST(request: NextRequest) {
             status: "active",
           })
           .eq("stripe_subscription_id", subscriptionId);
+        exiger(erreurPeriode, "invoice.payment_succeeded — mise à jour de la période");
 
-        // Enregistrer la transaction
-        await supabaseAdmin.from("credit_transactions").insert({
-          user_id: userId,
-          type: "subscription_credit",
-          amount: planConfig.credits,
-          balance_after: planConfig.credits,
-          description: `Renouvellement ${planConfig.plan} — ${planConfig.credits} crédits réattribués`,
-          reference_id: subscriptionId,
-        });
-
-        console.log(
-          `🔄 Renewal: ${userId} → ${planConfig.credits} crédits réattribués`
+        // Réattribuer les crédits (NON CUMULATIF : remise au montant du plan)
+        const credite = await remettreCredits(
+          supabaseAdmin,
+          userId,
+          planConfig.credits,
+          `Renouvellement ${planConfig.plan} — ${planConfig.credits} crédits réattribués`,
+          subscriptionId,
+          "invoice.payment_succeeded"
         );
+
+        if (credite) {
+          console.log(
+            `🔄 Renewal: ${userId} → ${planConfig.credits} crédits réattribués`
+          );
+        }
         break;
       }
 
@@ -367,16 +423,16 @@ export async function POST(request: NextRequest) {
 
         if (previousPriceId && previousPriceId !== priceId) {
           // C'est un vrai changement de plan
-          await supabaseAdmin
+          const { error: erreurProfil } = await supabaseAdmin
             .from("profiles")
             .update({
               plan: planConfig.plan,
-              credits: planConfig.credits,
               stripe_subscription_id: subscription.id,
             })
             .eq("id", userId);
+          exiger(erreurProfil, "customer.subscription.updated — mise à jour du profil");
 
-          await supabaseAdmin
+          const { error: erreurAbonnement } = await supabaseAdmin
             .from("subscriptions")
             .update({
               plan: planConfig.plan,
@@ -384,19 +440,20 @@ export async function POST(request: NextRequest) {
               status: subscription.status === "active" ? "active" : "past_due",
             })
             .eq("stripe_subscription_id", subscription.id);
+          exiger(erreurAbonnement, "customer.subscription.updated — mise à jour de subscriptions");
 
-          await supabaseAdmin.from("credit_transactions").insert({
-            user_id: userId,
-            type: "subscription_credit",
-            amount: planConfig.credits,
-            balance_after: planConfig.credits,
-            description: `Changement de plan → ${planConfig.plan} — ${planConfig.credits} crédits`,
-            reference_id: subscription.id,
-          });
-
-          console.log(
-            `📝 Plan changed: ${userId} → ${planConfig.plan}`
+          const credite = await remettreCredits(
+            supabaseAdmin,
+            userId,
+            planConfig.credits,
+            `Changement de plan → ${planConfig.plan} — ${planConfig.credits} crédits`,
+            subscription.id,
+            "customer.subscription.updated"
           );
+
+          if (credite) {
+            console.log(`📝 Plan changed: ${userId} → ${planConfig.plan}`);
+          }
         }
         break;
       }
@@ -417,7 +474,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Rétrograder vers le plan "free" (0 crédits)
-        await supabaseAdmin
+        const { error: erreurProfil } = await supabaseAdmin
           .from("profiles")
           .update({
             plan: null,
@@ -425,14 +482,16 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: null,
           })
           .eq("id", userId);
+        exiger(erreurProfil, "customer.subscription.deleted — rétrogradation du profil");
 
         // Mettre à jour le statut de l'abonnement
-        await supabaseAdmin
+        const { error: erreurAbonnement } = await supabaseAdmin
           .from("subscriptions")
           .update({
             status: "canceled",
           })
           .eq("stripe_subscription_id", subscription.id);
+        exiger(erreurAbonnement, "customer.subscription.deleted — clôture de subscriptions");
 
         console.log(`❌ Subscription cancelled: ${userId}`);
         break;
