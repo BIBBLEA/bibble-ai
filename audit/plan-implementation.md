@@ -116,8 +116,6 @@ Les six modèles français sont écrits, collés dans Supabase et vérifiés en 
       d'adresse porte **deux** liens (`{{ .TokenHash }}` et `{{ .TokenHashNew }}`) : *Secure email
       change* étant actif, le même message part vers l'ancienne et la nouvelle adresse et le
       changement n'aboutit qu'une fois les deux ouverts.
-- [ ] **A5.6** Activer et traduire les notifications de sécurité « Password changed » et
-      « Email address changed » (actuellement désactivées)
 
 ## A6 — URLs de callback et variables d'environnement
 
@@ -266,5 +264,9 @@ BLOC B  B0 (faille RLS)   ─── à traiter immédiatement ──────
 
 L'ensemble du plan est recetté en local et en sandbox Stripe : aucune étape ne requiert le compte
 en mode live.
+
+Les migrations 004 à 008 sont appliquées sur le projet hébergé depuis le 2026-08-05, avec le droit
+d'administration désigné en base — voir [migrations-production.md](./preuves/migrations-production.md).
+Reste le déploiement du code.
 
 Chaque section donne lieu à un ou plusieurs commits sur `fix-stripe-resend`.

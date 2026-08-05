@@ -1,7 +1,14 @@
-# État des lieux global — bibble-ai
+# État des lieux — bibble-ai
 
-> Synthèse du 2026-08-04 — branche `fix-stripe-resend`
-> Détails par service : [Supabase](./etat-supabase.md) · [Resend](./etat-resend.md) · [Stripe](./etat-stripe.md)
+Synthèse du 2026-08-04, branche `fix-stripe-resend`. Point d'entrée de l'audit.
+
+| Document | Contenu |
+|---|---|
+| [plan-implementation.md](./plan-implementation.md) | Déroulé des travaux, tâche par tâche, avec l'avancement |
+| [etat-supabase.md](./etat-supabase.md) | Supabase — SMTP Resend actif ; tout le flux « mot de passe oublié » manque côté app |
+| [etat-resend.md](./etat-resend.md) | Resend — domaine vérifié, envois délivrés ; les échecs récents viennent de tests faits avec `vous@example.com` |
+| [etat-stripe.md](./etat-stripe.md) | Stripe — sandbox conforme au code ; correctifs applicatifs à faire |
+| [preuves/](./preuves/) | Chaque faille exploitée avant correctif, bloquée après |
 
 ## Contexte
 

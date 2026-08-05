@@ -10,9 +10,12 @@
 -- ============================================
 
 -- --- 1. Registre des migrations connues de la CLI ---------------------------
--- Détermine ce que « supabase db push » voudra appliquer. Un registre vide
--- signifie que le schéma a été posé à la main : la CLI voudra alors tout
--- rejouer, ce qui passe puisque les migrations sont idempotentes.
+-- Détermine ce que « supabase db push » voudra appliquer. Un registre vide ou
+-- absent signifie que le schéma a été posé à la main : la CLI voudra alors tout
+-- rejouer depuis 000, et 001_initial_schema.sql échouera dès
+-- « CREATE TABLE public.profiles » — ce fichier n'est pas idempotent (tables,
+-- index, triggers et policies créés sans garde). Dans ce cas, coller 004 à 008
+-- à la main plutôt que de passer par la CLI.
 
 SELECT version, name
 FROM supabase_migrations.schema_migrations
